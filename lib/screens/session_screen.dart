@@ -179,14 +179,28 @@ class _AmplitudePanelState extends State<_AmplitudePanel> {
               ),
               const SizedBox(height: 2),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('-80', style: TextStyle(color: Colors.grey, fontSize: 9)),
-                  Text(
-                    '▲ поріг ${threshold.toStringAsFixed(0)} dBFS',
-                    style: const TextStyle(color: Colors.orange, fontSize: 9),
+                  const Text('-80 ', style: TextStyle(color: Colors.grey, fontSize: 9)),
+                  Expanded(
+                    child: Text(
+                      '▲ поріг ${threshold.toStringAsFixed(0)} dBFS',
+                      style: const TextStyle(color: Colors.orange, fontSize: 9),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  const Text('0', style: TextStyle(color: Colors.grey, fontSize: 9)),
+                  const Text(' 0', style: TextStyle(color: Colors.grey, fontSize: 9)),
+                  const SizedBox(width: 8),
+                  _ThresholdButton(
+                    label: '−5',
+                    onTap: () => context.read<SessionProvider>()
+                        .updateDetectionThreshold((threshold - 5).clamp(-80, -1)),
+                  ),
+                  const SizedBox(width: 4),
+                  _ThresholdButton(
+                    label: '+5',
+                    onTap: () => context.read<SessionProvider>()
+                        .updateDetectionThreshold((threshold + 5).clamp(-80, -1)),
+                  ),
                 ],
               ),
             ],
@@ -264,6 +278,30 @@ class _BottomBar extends StatelessWidget {
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => VideoPlayerOverlay(shot: shot, preRollSec: settings.preRollSec),
+      ),
+    );
+  }
+}
+
+// ── Threshold step button ────────────────────────────────────────────────────
+
+class _ThresholdButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _ThresholdButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.2),
+          border: Border.all(color: Colors.orange, width: 1),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(label, style: const TextStyle(color: Colors.orange, fontSize: 11)),
       ),
     );
   }

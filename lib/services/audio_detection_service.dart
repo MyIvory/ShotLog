@@ -18,12 +18,17 @@ class AudioDetectionService {
   double _lastDbfs = -80.0;
   double get lastDbfs => _lastDbfs;
 
+  double _thresholdDbfs = -20.0;
+
+  void updateThreshold(double v) => _thresholdDbfs = v;
+
   Future<void> start(double thresholdDbfs) async {
     if (_active) return;
     _active = true;
     _debouncing = false;
+    _thresholdDbfs = thresholdDbfs;
 
-    // Use file-based recording — more reliable for onAmplitudeChanged on Android.
+    // File-based recording is more reliable for onAmplitudeChanged on Android.
     final dir = await getTemporaryDirectory();
     _tempPath = '${dir.path}/shotlog_monitor_${DateTime.now().millisecondsSinceEpoch}.wav';
 
@@ -42,7 +47,7 @@ class AudioDetectionService {
       _lastDbfs = amp.current;
       if (!_ampController.isClosed) _ampController.add(amp.current);
 
-      if (amp.current >= thresholdDbfs && !_debouncing) {
+      if (amp.current >= _thresholdDbfs && !_debouncing) {
         _debouncing = true;
         onShotDetected?.call();
         Future.delayed(const Duration(seconds: 2), () => _debouncing = false);

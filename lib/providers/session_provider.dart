@@ -9,6 +9,7 @@ import '../services/audio_detection_service.dart';
 import '../services/video_recording_service.dart';
 import '../services/sound_feedback_service.dart';
 import '../services/bluetooth_button_service.dart';
+import '../services/settings_service.dart';
 
 enum SessionState { idle, ready, countdown, recordingArmed, recordingPost, processing }
 
@@ -40,6 +41,13 @@ class SessionProvider extends ChangeNotifier {
 
   /// Live amplitude stream from microphone (active only during recordingArmed).
   Stream<double> get amplitudeStream => _audio.amplitudeStream;
+
+  Future<void> updateDetectionThreshold(double v) async {
+    _settings = _settings.copyWith(detectionDbfs: v);
+    _audio.updateThreshold(v);
+    await SettingsService().save(_settings);
+    notifyListeners();
+  }
 
   /// Expose camera controller for CameraPreview widget.
   dynamic get cameraController => _video.controller;
