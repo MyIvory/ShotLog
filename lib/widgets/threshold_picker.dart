@@ -5,6 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
+// Half the drag-band height (48 px). Keeps the threshold indicator inside
+// the drawing area at both extremes (0 dBFS top, −80 dBFS bottom).
+const double _kMeterTopPad = 24.0;
+const double _kMeterBottomPad = 24.0;
+
 /// Opens the VU-meter threshold picker as a modal bottom sheet.
 /// Returns the selected dBFS value, or null if dismissed.
 Future<double?> showThresholdPicker(BuildContext context, double currentThreshold) {
@@ -93,9 +98,11 @@ class _ThresholdPickerSheetState extends State<_ThresholdPickerSheet> {
   double _dbfsToFraction(double dbfs) =>
       ((dbfs - _minDb) / _rangeDb).clamp(0.0, 1.0);
 
-  void _handleTouch(double localY, double height) =>
-      setState(() =>
-          _thresholdFraction = (1.0 - localY / height).clamp(0.0, 1.0));
+  void _handleTouch(double localY, double height) {
+    final effectiveH = height - _kMeterTopPad - _kMeterBottomPad;
+    setState(() =>
+        _thresholdFraction = (1.0 - (localY - _kMeterTopPad) / effectiveH).clamp(0.0, 1.0));
+  }
 
   void _onDragStart(DragStartDetails _) =>
       setState(() { _tooltipTimer?.cancel(); _showTooltip = true; });
@@ -172,7 +179,7 @@ class _ThresholdPickerSheetState extends State<_ThresholdPickerSheet> {
                         if (_showTooltip)
                           for (final side in [_TooltipSide.left, _TooltipSide.right])
                             Positioned(
-                              top: (h * (1.0 - _thresholdFraction) - 16)
+                              top: (_kMeterTopPad + (h - _kMeterTopPad - _kMeterBottomPad) * (1.0 - _thresholdFraction) - 16)
                                   .clamp(0, h - 32),
                               left: side == _TooltipSide.left ? 12 : null,
                               right: side == _TooltipSide.right ? 12 : null,
@@ -246,7 +253,7 @@ class _DbLabels extends StatelessWidget {
         children: [
           for (int db = -80; db <= 0; db += 10)
             Positioned(
-              top: totalHeight * (1.0 - (db + 80) / 80) - 8,
+              top: _kMeterTopPad + (totalHeight - _kMeterTopPad - _kMeterBottomPad) * (1.0 - (db + 80) / 80) - 14,
               left: 6,
               child: Text(
                 '$db',
@@ -287,19 +294,22 @@ class _VuMeterPainter extends CustomPainter {
       Paint()..color = const Color(0xFF1A1A2E),
     );
 
-    // Grid lines every 10 dB (= every 1/8 of height)
+    // Grid lines every 10 dB
+    const double topPad = _kMeterTopPad;
+    const double bottomPad = _kMeterBottomPad;
+    final effectiveH = h - topPad - bottomPad;
     final gridPaint = Paint()..color = Colors.white12..strokeWidth = 1;
     for (int db = -80; db <= 0; db += 10) {
-      final y = h * (1.0 - (db + 80) / 80);
+      final y = topPad + effectiveH * (1.0 - (db + 80) / 80);
       canvas.drawLine(Offset(0, y), Offset(w, y), gridPaint);
     }
 
-    // Level bar (from bottom up)
-    final barH = levelFraction * h;
+    // Level bar (from bottom up, within effective range)
+    final barH = levelFraction * effectiveH;
     if (barH > 0) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, h - barH, w, barH),
+          Rect.fromLTWH(0, h - bottomPad - barH, w, barH),
           const Radius.circular(4),
         ),
         Paint()
@@ -309,7 +319,7 @@ class _VuMeterPainter extends CustomPainter {
     }
 
     // Threshold line (dashed)
-    final threshY = h * (1.0 - thresholdFraction);
+    final threshY = topPad + effectiveH * (1.0 - thresholdFraction);
     final threshPaint = Paint()..color = Colors.orange..strokeWidth = 2;
     const dash = 10.0;
     const gap = 5.0;
