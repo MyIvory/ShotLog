@@ -7,6 +7,7 @@ class SettingsService {
   static const _postRoll = 'post_roll_sec';
   static const _preRoll = 'pre_roll_sec';
   static const _detectionDb = 'detection_dbfs';
+  static const _triggerMode = 'trigger_mode';
 
   Future<AppSettings> load() async {
     final p = await SharedPreferences.getInstance();
@@ -16,6 +17,7 @@ class SettingsService {
       postRollSec: p.getInt(_postRoll) ?? 3,
       preRollSec: p.getInt(_preRoll) ?? 2,
       detectionDbfs: p.getDouble(_detectionDb) ?? -40.0,
+      triggerMode: TriggerMode.values[p.getInt(_triggerMode) ?? TriggerMode.bluetooth.index],
     );
   }
 
@@ -26,5 +28,6 @@ class SettingsService {
     await p.setInt(_postRoll, s.postRollSec);
     await p.setInt(_preRoll, s.preRollSec);
     await p.setDouble(_detectionDb, s.detectionDbfs);
+    await p.setInt(_triggerMode, s.triggerMode.index);
   }
 }

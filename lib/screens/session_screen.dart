@@ -237,6 +237,7 @@ class _AmplitudePanelState extends State<_AmplitudePanel> {
                                   color: Color(0xFF3A3430), fontSize: 7)),
                         ),
                         // Threshold label at dynamic position
+                        if (w > 24)
                         Positioned(
                           left: (threshX - 12).clamp(0.0, w - 24),
                           child: Text(
@@ -281,6 +282,8 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final hasShots = sp.shots.isNotEmpty;
+    final inButtonMode = settings.triggerMode == TriggerMode.button;
+    final isReady = sp.state == SessionState.ready;
 
     final btnStyle = FilledButton.styleFrom(
       backgroundColor: _btnStyle.bg,
@@ -295,26 +298,51 @@ class _BottomBar extends StatelessWidget {
     return Container(
       color: const Color(0xFF0A0D08),
       padding: EdgeInsets.fromLTRB(12, 8, 12, 10 + bottomPad),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (hasShots) ...[
-            Expanded(
+          if (inButtonMode) ...[
+            SizedBox(
+              width: double.infinity,
               child: FilledButton.icon(
-                style: btnStyle,
-                onPressed: () => _openLastShot(context),
-                icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                label: const Text('Перегляд'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: isReady ? const Color(0xFF3A6B1A) : const Color(0xFF1E1E1E),
+                  foregroundColor: isReady ? Colors.white : const Color(0xFF555555),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: isReady ? sp.triggerButton : null,
+                icon: const Icon(Icons.play_arrow_rounded, size: 24),
+                label: const Text('ПУСК'),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(height: 8),
           ],
-          Expanded(
-            child: FilledButton.icon(
-              style: btnStyle,
-              onPressed: () => _confirmEnd(context),
-              icon: const Icon(Icons.stop_rounded, size: 18),
-              label: const Text('Завершити'),
-            ),
+          Row(
+            children: [
+              if (hasShots) ...[
+                Expanded(
+                  child: FilledButton.icon(
+                    style: btnStyle,
+                    onPressed: () => _openLastShot(context),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                    label: const Text('Перегляд'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: FilledButton.icon(
+                  style: btnStyle,
+                  onPressed: () => _confirmEnd(context),
+                  icon: const Icon(Icons.stop_rounded, size: 18),
+                  label: const Text('Завершити'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
