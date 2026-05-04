@@ -15,7 +15,7 @@ class SettingsService {
       timeoutSec: p.getInt(_timeout) ?? 10,
       postRollSec: p.getInt(_postRoll) ?? 3,
       preRollSec: p.getInt(_preRoll) ?? 2,
-      detectionDbfs: p.getDouble(_detectionDb) ?? -20.0,
+      detectionDbfs: p.getDouble(_detectionDb) ?? -40.0,
     );
   }
 

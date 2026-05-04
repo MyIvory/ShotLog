@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+
+  <!-- Background: deep warm dark, Android adaptive rounded square ~22% radius -->
+  <rect width="1024" height="1024" rx="224" fill="#1A1210"/>
+
+  <!-- Outer reticle ring: r=378, centered 512,512 -->
+  <circle cx="512" cy="512" r="378" fill="none" stroke="#E87722" stroke-width="38"/>
+
+  <!-- Inner ring: r=198 -->
+  <circle cx="512" cy="512" r="198" fill="none" stroke="#E87722" stroke-width="22"/>
+
+  <!-- Crosshair arms — gap between inner/outer rings -->
+  <!-- Top: outer top=134, inner top=314, small gap -->
+  <line x1="512" y1="134" x2="512" y2="305" stroke="#E87722" stroke-width="38" stroke-linecap="round"/>
+  <!-- Bottom -->
+  <line x1="512" y1="719" x2="512" y2="890" stroke="#E87722" stroke-width="38" stroke-linecap="round"/>
+  <!-- Left -->
+  <line x1="134" y1="512" x2="305" y2="512" stroke="#E87722" stroke-width="38" stroke-linecap="round"/>
+  <!-- Right -->
+  <line x1="719" y1="512" x2="890" y2="512" stroke="#E87722" stroke-width="38" stroke-linecap="round"/>
+
+  <!-- Play triangle — centered 512,512, optically balanced right-pointing -->
+  <polygon points="460,416 460,608 612,512" fill="#FFFFFF"/>
+
+  <!-- REC indicator dot — upper-right at ~45° on outer ring -->
+  <circle cx="779" cy="245" r="52" fill="#E87722"/>
+  <circle cx="779" cy="245" r="22" fill="#1A1210"/>
+
+</svg>

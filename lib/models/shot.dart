@@ -6,6 +6,7 @@ class Shot {
   final String clipPath;
   final int shotOffsetMs;
   final String? thumbnailPath;
+  final double? triggerDbfs;
 
   const Shot({
     this.id,
@@ -15,6 +16,7 @@ class Shot {
     required this.clipPath,
     required this.shotOffsetMs,
     this.thumbnailPath,
+    this.triggerDbfs,
   });
 
   Map<String, dynamic> toMap() => {
@@ -25,6 +27,7 @@ class Shot {
         'clip_path': clipPath,
         'shot_offset_ms': shotOffsetMs,
         'thumbnail_path': thumbnailPath,
+        'trigger_dbfs': triggerDbfs,
       };
 
   factory Shot.fromMap(Map<String, dynamic> m) => Shot(
@@ -35,6 +38,7 @@ class Shot {
         clipPath: m['clip_path'] as String,
         shotOffsetMs: m['shot_offset_ms'] as int,
         thumbnailPath: m['thumbnail_path'] as String?,
+        triggerDbfs: m['trigger_dbfs'] as double?,
       );
 
   Shot copyWith({
@@ -49,5 +53,6 @@ class Shot {
         clipPath: clipPath,
         shotOffsetMs: shotOffsetMs,
         thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+        triggerDbfs: triggerDbfs,
       );
 }

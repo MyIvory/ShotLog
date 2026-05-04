@@ -1,0 +1,543 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100">
+<defs>
+  <clipPath id="ph1"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+  <clipPath id="ph2"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+  <clipPath id="ph3"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+  <clipPath id="ph4"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+  <clipPath id="ph5"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+  <clipPath id="ph6"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+  <clipPath id="ph7"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+  <clipPath id="ph8"><rect x="0" y="0" width="220" height="440" rx="36"/></clipPath>
+</defs>
+
+<!-- Canvas background -->
+<rect width="1600" height="1100" fill="#0D0A09"/>
+
+<!-- ═══ HEADER ═══ -->
+<text x="80" y="52" font-family="Roboto,system-ui,sans-serif" font-size="28" font-weight="700" fill="#F0EAE5" letter-spacing="0.08em">SHOTLOG</text>
+<text x="80" y="74" font-family="Roboto,system-ui,sans-serif" font-size="13" fill="#5A5040" letter-spacing="0.1em">UI SCREEN OVERVIEW · ALL SCREENS</text>
+<line x1="80" y1="86" x2="1520" y2="86" stroke="#2A2018" stroke-width="1"/>
+
+<!-- ════════════════════════════════════════ -->
+<!-- ROW 1: Home, Recording, Session Detail  -->
+<!-- ════════════════════════════════════════ -->
+
+<!-- LABELS ROW 1 -->
+<text x="190" y="118" font-family="Roboto,system-ui,sans-serif" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">HOME</text>
+<text x="480" y="118" font-family="Roboto,system-ui,sans-serif" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">LIVE RECORDING</text>
+<text x="770" y="118" font-family="Roboto,system-ui,sans-serif" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">SESSION DETAIL</text>
+<text x="1060" y="118" font-family="Roboto,system-ui,sans-serif" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">SETTINGS</text>
+<text x="1350" y="118" font-family="Roboto,system-ui,sans-serif" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">VIDEO PLAYBACK</text>
+
+<!-- ── PHONE 1: HOME ── -->
+<g transform="translate(80,128)">
+  <rect width="220" height="440" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph1)">
+    <!-- status bar -->
+    <rect width="220" height="22" fill="#1A1210"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038">9:41</text>
+    <text x="204" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038" text-anchor="end">●●●</text>
+    <!-- top bar -->
+    <text x="16" y="40" font-family="Roboto,system-ui" font-size="15" font-weight="700" fill="#F0EAE5">ShotLog</text>
+    <text x="16" y="54" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">4 сесії · квітень 2026</text>
+    <!-- session cards -->
+    <rect x="12" y="62" width="196" height="62" rx="10" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="22" y="78" font-family="Roboto,system-ui" font-size="11" font-weight="500" fill="#F0EAE5">Сесія #4 — Полігон</text>
+    <text x="22" y="91" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">28 квіт 2026 · 14:32</text>
+    <rect x="168" y="68" width="28" height="16" rx="8" fill="#E87722"/>
+    <text x="182" y="80" font-family="Roboto,system-ui" font-size="9" font-weight="700" fill="#1A0A00" text-anchor="middle">12</text>
+    <rect x="22" y="98" width="52" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="48" y="108" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">Savage 110</text>
+    <rect x="78" y="98" width="42" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="99" y="108" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">300 WM</text>
+    <rect x="124" y="98" width="32" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="140" y="108" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">800м</text>
+
+    <rect x="12" y="130" width="196" height="58" rx="10" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="22" y="146" font-family="Roboto,system-ui" font-size="11" font-weight="500" fill="#F0EAE5">Сесія #3 — Ранкова</text>
+    <text x="22" y="159" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">21 квіт 2026 · 08:15</text>
+    <rect x="170" y="136" width="24" height="16" rx="8" fill="#E87722"/>
+    <text x="182" y="148" font-family="Roboto,system-ui" font-size="9" font-weight="700" fill="#1A0A00" text-anchor="middle">8</text>
+    <rect x="22" y="164" width="52" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="48" y="174" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">Savage 110</text>
+
+    <rect x="12" y="196" width="196" height="58" rx="10" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="22" y="212" font-family="Roboto,system-ui" font-size="11" font-weight="500" fill="#F0EAE5">Сесія #2 — 500м</text>
+    <text x="22" y="225" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">14 квіт 2026 · 11:00</text>
+    <rect x="168" y="202" width="28" height="16" rx="8" fill="#E87722"/>
+    <text x="182" y="214" font-family="Roboto,system-ui" font-size="9" font-weight="700" fill="#1A0A00" text-anchor="middle">15</text>
+    <rect x="22" y="230" width="42" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="43" y="240" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">Tikka T3x</text>
+
+    <rect x="12" y="262" width="196" height="58" rx="10" fill="#261E1A" stroke="#33281F" stroke-width="1" opacity="0.55"/>
+    <text x="22" y="278" font-family="Roboto,system-ui" font-size="11" font-weight="500" fill="#F0EAE5" opacity="0.55">Сесія #1 — Тест</text>
+    <text x="22" y="291" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58" opacity="0.55">07 квіт 2026 · 16:45</text>
+    <rect x="170" y="268" width="24" height="16" rx="8" fill="#4A3528" opacity="0.55"/>
+    <text x="182" y="280" font-family="Roboto,system-ui" font-size="9" font-weight="700" fill="#C89A6A" text-anchor="middle" opacity="0.55">5</text>
+
+    <!-- FAB -->
+    <rect x="128" y="332" width="80" height="28" rx="10" fill="#E87722"/>
+    <text x="168" y="350" font-family="Roboto,system-ui" font-size="10" font-weight="700" fill="#1A0A00" text-anchor="middle">+ Нова сесія</text>
+
+    <!-- bottom nav -->
+    <rect x="0" y="392" width="220" height="48" fill="#201610" stroke="#2A1E16" stroke-width="1"/>
+    <circle cx="55" cy="412" r="10" fill="none" stroke="#E87722" stroke-width="1.5"/>
+    <line x1="55" y1="402" x2="55" y2="405" stroke="#E87722" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="55" y1="419" x2="55" y2="422" stroke="#E87722" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="45" y1="412" x2="48" y2="412" stroke="#E87722" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="62" y1="412" x2="65" y2="412" stroke="#E87722" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="55" cy="412" r="2" fill="#E87722"/>
+    <text x="55" y="430" font-family="Roboto,system-ui" font-size="8" fill="#E87722" text-anchor="middle">Сесії</text>
+    <rect x="96" y="404" width="16" height="12" rx="1.5" fill="none" stroke="#5A5450" stroke-width="1.5"/>
+    <text x="110" y="430" font-family="Roboto,system-ui" font-size="8" fill="#5A5450" text-anchor="middle">Галерея</text>
+    <text x="165" y="430" font-family="Roboto,system-ui" font-size="8" fill="#5A5450" text-anchor="middle">Налашт.</text>
+  </g>
+</g>
+
+<!-- ── PHONE 2: LIVE RECORDING ── -->
+<g transform="translate(370,128)">
+  <rect width="220" height="440" rx="36" fill="#0D1008" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph2)">
+    <rect width="220" height="440" fill="#0A0D08"/>
+    <!-- grid -->
+    <line x1="73" y1="0" x2="73" y2="360" stroke="#FFFFFF" stroke-width="0.4" opacity="0.08"/>
+    <line x1="147" y1="0" x2="147" y2="360" stroke="#FFFFFF" stroke-width="0.4" opacity="0.08"/>
+    <line x1="0" y1="120" x2="220" y2="120" stroke="#FFFFFF" stroke-width="0.4" opacity="0.08"/>
+    <line x1="0" y1="240" x2="220" y2="240" stroke="#FFFFFF" stroke-width="0.4" opacity="0.08"/>
+    <!-- REC chip -->
+    <rect x="12" y="30" width="62" height="20" rx="6" fill="rgba(80,8,8,0.85)" stroke="#8B1A1A" stroke-width="1"/>
+    <circle cx="22" cy="40" r="4" fill="#FF3B3B"/>
+    <text x="48" y="44" font-family="Roboto,system-ui" font-size="9" font-weight="600" fill="#FF6B6B" text-anchor="middle">ЗАПИС</text>
+    <!-- shot counter -->
+    <rect x="154" y="30" width="54" height="20" rx="6" fill="rgba(0,0,0,0.6)" stroke="#E87722" stroke-width="1"/>
+    <text x="181" y="44" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#E87722" text-anchor="middle">14</text>
+    <!-- crosshair -->
+    <circle cx="110" cy="180" r="40" fill="none" stroke="#E87722" stroke-width="1" opacity="0.5"/>
+    <circle cx="110" cy="180" r="14" fill="none" stroke="#E87722" stroke-width="0.8" opacity="0.5"/>
+    <line x1="110" y1="140" x2="110" y2="162" stroke="#E87722" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+    <line x1="110" y1="198" x2="110" y2="220" stroke="#E87722" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+    <line x1="70" y1="180" x2="92" y2="180" stroke="#E87722" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+    <line x1="128" y1="180" x2="150" y2="180" stroke="#E87722" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+    <!-- timer -->
+    <text x="16" y="352" font-family="Roboto,system-ui" font-size="9" fill="#4A6A30">00:04:32</text>
+    <!-- audio bar area -->
+    <rect x="0" y="358" width="220" height="48" fill="#0A0D08"/>
+    <text x="12" y="370" font-family="Roboto,system-ui" font-size="8" fill="#5A5450">Рівень звуку</text>
+    <rect x="12" y="374" width="196" height="14" rx="4" fill="#1A1A0A"/>
+    <rect x="12" y="374" width="108" height="14" rx="4" fill="#2A3A10"/>
+    <line x1="145" y1="374" x2="145" y2="388" stroke="#E87722" stroke-width="1.5"/>
+    <text x="12" y="399" font-family="Roboto,system-ui" font-size="7" fill="#3A3430">–60 dBFS</text>
+    <text x="145" y="399" font-family="Roboto,system-ui" font-size="7" fill="#E87722" text-anchor="middle">–18</text>
+    <text x="208" y="399" font-family="Roboto,system-ui" font-size="7" fill="#3A3430" text-anchor="end">0</text>
+    <!-- завершити btn -->
+    <rect x="70" y="408" width="80" height="24" rx="8" fill="#E87722"/>
+    <text x="110" y="424" font-family="Roboto,system-ui" font-size="10" font-weight="700" fill="#1A0A00" text-anchor="middle">Завершити</text>
+  </g>
+</g>
+
+<!-- ── PHONE 3: SESSION DETAIL ── -->
+<g transform="translate(660,128)">
+  <rect width="220" height="440" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph3)">
+    <rect width="220" height="440" fill="#1A1210"/>
+    <rect width="220" height="22" fill="#1A1210"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038">9:41</text>
+    <!-- topbar -->
+    <text x="32" y="40" font-family="Roboto,system-ui" font-size="14" font-weight="500" fill="#F0EAE5">Сесія #4</text>
+    <!-- chips -->
+    <rect x="12" y="48" width="52" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="38" y="58" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">Savage 110</text>
+    <rect x="68" y="48" width="56" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="96" y="58" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">300 WM 208gr</text>
+    <rect x="128" y="48" width="32" height="14" rx="7" fill="#33281F" stroke="#4A3528" stroke-width="0.5"/>
+    <text x="144" y="58" font-family="Roboto,system-ui" font-size="8" fill="#C89A6A" text-anchor="middle">800м</text>
+    <!-- stats row -->
+    <rect x="12" y="68" width="58" height="40" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="41" y="86" font-family="Roboto,system-ui" font-size="14" font-weight="700" fill="#E87722" text-anchor="middle">12</text>
+    <text x="41" y="99" font-family="Roboto,system-ui" font-size="8" fill="#7A6A58" text-anchor="middle">Постр.</text>
+    <rect x="76" y="68" width="66" height="40" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="109" y="86" font-family="Roboto,system-ui" font-size="12" font-weight="700" fill="#E87722" text-anchor="middle">–21.4</text>
+    <text x="109" y="99" font-family="Roboto,system-ui" font-size="8" fill="#7A6A58" text-anchor="middle">Сер. dBFS</text>
+    <rect x="148" y="68" width="60" height="40" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="178" y="86" font-family="Roboto,system-ui" font-size="14" font-weight="700" fill="#E87722" text-anchor="middle">4:32</text>
+    <text x="178" y="99" font-family="Roboto,system-ui" font-size="8" fill="#7A6A58" text-anchor="middle">Тривал.</text>
+    <!-- shot cards -->
+    <rect x="12" y="116" width="196" height="46" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <rect x="20" y="124" width="38" height="28" rx="4" fill="#0A1806" stroke="#3A3010" stroke-width="1"/>
+    <polygon points="34,134 34,146 44,140" fill="#E87722"/>
+    <text x="66" y="136" font-family="Roboto,system-ui" font-size="10" font-weight="500" fill="#D0C4BC">Постріл #1 · 00:00:14</text>
+    <text x="66" y="150" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">–19.2 dBFS · 0.34с pre-roll</text>
+
+    <rect x="12" y="168" width="196" height="46" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <rect x="20" y="176" width="38" height="28" rx="4" fill="#0A1806" stroke="#3A3010" stroke-width="1"/>
+    <polygon points="34,186 34,198 44,192" fill="#E87722"/>
+    <text x="66" y="188" font-family="Roboto,system-ui" font-size="10" font-weight="500" fill="#D0C4BC">Постріл #2 · 00:01:03</text>
+    <text x="66" y="202" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">–21.8 dBFS · 0.34с pre-roll</text>
+
+    <rect x="12" y="220" width="196" height="46" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <rect x="20" y="228" width="38" height="28" rx="4" fill="#0A1806" stroke="#3A3010" stroke-width="1"/>
+    <polygon points="34,238 34,250 44,244" fill="#E87722"/>
+    <text x="66" y="240" font-family="Roboto,system-ui" font-size="10" font-weight="500" fill="#D0C4BC">Постріл #3 · 00:01:47</text>
+    <text x="66" y="254" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">–20.1 dBFS · 0.34с pre-roll</text>
+
+    <rect x="12" y="272" width="196" height="46" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <rect x="20" y="280" width="38" height="28" rx="4" fill="#0A1806" stroke="#3A3010" stroke-width="1"/>
+    <polygon points="34,290 34,302 44,296" fill="#E87722"/>
+    <text x="66" y="292" font-family="Roboto,system-ui" font-size="10" font-weight="500" fill="#D0C4BC">Постріл #4 · 00:02:29</text>
+    <text x="66" y="306" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">–22.5 dBFS · 0.34с pre-roll</text>
+
+    <rect x="12" y="324" width="196" height="46" rx="8" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <rect x="20" y="332" width="38" height="28" rx="4" fill="#0A1806" stroke="#3A3010" stroke-width="1"/>
+    <polygon points="34,342 34,354 44,348" fill="#E87722"/>
+    <text x="66" y="344" font-family="Roboto,system-ui" font-size="10" font-weight="500" fill="#D0C4BC">Постріл #5 · 00:03:11</text>
+    <text x="66" y="358" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">–18.9 dBFS · 0.34с pre-roll</text>
+
+    <!-- bottom nav -->
+    <rect x="0" y="392" width="220" height="48" fill="#201610" stroke="#2A1E16" stroke-width="1"/>
+    <circle cx="55" cy="412" r="10" fill="none" stroke="#E87722" stroke-width="1.5"/>
+    <circle cx="55" cy="412" r="2" fill="#E87722"/>
+    <text x="55" y="430" font-family="Roboto,system-ui" font-size="8" fill="#E87722" text-anchor="middle">Сесії</text>
+    <text x="165" y="430" font-family="Roboto,system-ui" font-size="8" fill="#5A5450" text-anchor="middle">Налашт.</text>
+  </g>
+</g>
+
+<!-- ── PHONE 4: SETTINGS ── -->
+<g transform="translate(950,128)">
+  <rect width="220" height="440" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph4)">
+    <rect width="220" height="440" fill="#1A1210"/>
+    <rect width="220" height="22" fill="#1A1210"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038">9:41</text>
+    <text x="16" y="40" font-family="Roboto,system-ui" font-size="15" font-weight="500" fill="#F0EAE5">Налаштування</text>
+    <!-- group label -->
+    <text x="16" y="58" font-family="Roboto,system-ui" font-size="8" fill="#5A5450" letter-spacing="0.08em">ВИЯВЛЕННЯ ПОСТРІЛІВ</text>
+    <!-- sliders -->
+    <rect x="0" y="62" width="220" height="44" fill="#1E1815"/>
+    <text x="16" y="78" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">Поріг (dBFS)</text>
+    <text x="204" y="78" font-family="Roboto,system-ui" font-size="10" fill="#E87722" text-anchor="end">–18 dBFS</text>
+    <rect x="16" y="84" width="188" height="3" rx="1.5" fill="#33281F"/>
+    <rect x="16" y="84" width="116" height="3" rx="1.5" fill="#E87722"/>
+    <circle cx="132" cy="85.5" r="6" fill="#E87722" stroke="#1A1210" stroke-width="1.5"/>
+
+    <rect x="0" y="106" width="220" height="44" fill="#1A1210"/>
+    <text x="16" y="122" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">Pre-roll (сек)</text>
+    <text x="204" y="122" font-family="Roboto,system-ui" font-size="10" fill="#E87722" text-anchor="end">0.34 с</text>
+    <rect x="16" y="128" width="188" height="3" rx="1.5" fill="#33281F"/>
+    <rect x="16" y="128" width="64" height="3" rx="1.5" fill="#E87722"/>
+    <circle cx="80" cy="129.5" r="6" fill="#E87722" stroke="#1A1210" stroke-width="1.5"/>
+
+    <rect x="0" y="150" width="220" height="44" fill="#1E1815"/>
+    <text x="16" y="166" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">Post-roll (сек)</text>
+    <text x="204" y="166" font-family="Roboto,system-ui" font-size="10" fill="#E87722" text-anchor="end">1.5 с</text>
+    <rect x="16" y="172" width="188" height="3" rx="1.5" fill="#33281F"/>
+    <rect x="16" y="172" width="90" height="3" rx="1.5" fill="#E87722"/>
+    <circle cx="106" cy="173.5" r="6" fill="#E87722" stroke="#1A1210" stroke-width="1.5"/>
+
+    <rect x="0" y="194" width="220" height="44" fill="#1A1210"/>
+    <text x="16" y="210" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">Затримка кнопки (сек)</text>
+    <text x="204" y="210" font-family="Roboto,system-ui" font-size="10" fill="#E87722" text-anchor="end">5.0 с</text>
+    <rect x="16" y="216" width="188" height="3" rx="1.5" fill="#33281F"/>
+    <rect x="16" y="216" width="75" height="3" rx="1.5" fill="#E87722"/>
+    <circle cx="91" cy="217.5" r="6" fill="#E87722" stroke="#1A1210" stroke-width="1.5"/>
+
+    <rect x="0" y="238" width="220" height="44" fill="#1E1815"/>
+    <text x="16" y="254" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">Мін. інтервал (сек)</text>
+    <text x="204" y="254" font-family="Roboto,system-ui" font-size="10" fill="#E87722" text-anchor="end">2.0 с</text>
+    <rect x="16" y="260" width="188" height="3" rx="1.5" fill="#33281F"/>
+    <rect x="16" y="260" width="75" height="3" rx="1.5" fill="#E87722"/>
+    <circle cx="91" cy="261.5" r="6" fill="#E87722" stroke="#1A1210" stroke-width="1.5"/>
+
+    <text x="16" y="298" font-family="Roboto,system-ui" font-size="8" fill="#5A5450" letter-spacing="0.08em">ВІДЕО</text>
+    <rect x="0" y="302" width="220" height="36" fill="#1E1815"/>
+    <text x="16" y="324" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">Роздільна здатність</text>
+    <text x="204" y="324" font-family="Roboto,system-ui" font-size="10" fill="#E87722" text-anchor="end">1080p</text>
+    <rect x="0" y="338" width="220" height="36" fill="#1A1210"/>
+    <text x="16" y="360" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">Частота кадрів</text>
+    <text x="204" y="360" font-family="Roboto,system-ui" font-size="10" fill="#E87722" text-anchor="end">60 fps</text>
+
+    <text x="16" y="390" font-family="Roboto,system-ui" font-size="8" fill="#5A5450" letter-spacing="0.08em">BLUETOOTH</text>
+    <rect x="0" y="394" width="220" height="36" fill="#1E1815"/>
+    <text x="16" y="416" font-family="Roboto,system-ui" font-size="11" fill="#C0B4AC">BT-пристрій</text>
+    <text x="204" y="416" font-family="Roboto,system-ui" font-size="10" fill="#C89A6A" text-anchor="end">BTN-1 Pro</text>
+
+    <!-- bottom nav -->
+    <rect x="0" y="430" width="220" height="48" fill="#201610" stroke="#2A1E16" stroke-width="1"/>
+    <text x="165" y="448" font-family="Roboto,system-ui" font-size="8" fill="#E87722" text-anchor="middle">Налашт.</text>
+  </g>
+</g>
+
+<!-- ── PHONE 5: VIDEO PLAYBACK ── -->
+<g transform="translate(1240,128)">
+  <rect width="220" height="440" rx="36" fill="#050503" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph5)">
+    <rect width="220" height="440" fill="#050503"/>
+    <rect width="220" height="22" fill="#050503"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#3A3430">9:41</text>
+    <!-- topbar -->
+    <text x="32" y="40" font-family="Roboto,system-ui" font-size="11" font-weight="500" fill="#C0B4AC">Постріл #3 · Сесія #4</text>
+    <!-- video area -->
+    <rect x="0" y="48" width="220" height="240" fill="#050503"/>
+    <line x1="73" y1="48" x2="73" y2="288" stroke="#E87722" stroke-width="0.5" opacity="0.1"/>
+    <line x1="147" y1="48" x2="147" y2="288" stroke="#E87722" stroke-width="0.5" opacity="0.1"/>
+    <line x1="0" y1="128" x2="220" y2="128" stroke="#E87722" stroke-width="0.5" opacity="0.1"/>
+    <line x1="0" y1="208" x2="220" y2="208" stroke="#E87722" stroke-width="0.5" opacity="0.1"/>
+    <!-- crosshair watermark -->
+    <circle cx="110" cy="168" r="32" fill="none" stroke="#E87722" stroke-width="1" opacity="0.12"/>
+    <circle cx="110" cy="168" r="10" fill="none" stroke="#E87722" stroke-width="0.8" opacity="0.12"/>
+    <line x1="110" y1="136" x2="110" y2="155" stroke="#E87722" stroke-width="0.8" opacity="0.12"/>
+    <line x1="110" y1="181" x2="110" y2="200" stroke="#E87722" stroke-width="0.8" opacity="0.12"/>
+    <line x1="78" y1="168" x2="97" y2="168" stroke="#E87722" stroke-width="0.8" opacity="0.12"/>
+    <line x1="123" y1="168" x2="142" y2="168" stroke="#E87722" stroke-width="0.8" opacity="0.12"/>
+    <!-- quality badge -->
+    <rect x="156" y="56" width="52" height="16" rx="4" fill="rgba(0,0,0,0.5)"/>
+    <text x="182" y="67" font-family="Roboto,system-ui" font-size="8" fill="#7A9A50" text-anchor="middle">1080p · 60fps</text>
+    <text x="16" y="282" font-family="Roboto,system-ui" font-size="8" fill="#5A7A40">00:01:47</text>
+    <!-- dBFS info -->
+    <rect x="0" y="290" width="220" height="22" fill="#050503"/>
+    <text x="16" y="304" font-family="Roboto,system-ui" font-size="8" fill="#5A5450">–20.1 dBFS · 0.34с до пострілу</text>
+    <!-- progress bar -->
+    <rect x="16" y="316" width="188" height="3" rx="1.5" fill="#2A2420"/>
+    <rect x="16" y="316" width="72" height="3" rx="1.5" fill="#E87722"/>
+    <!-- shot marker -->
+    <polygon points="84,311 88,311 86,316" fill="#E87722"/>
+    <!-- time labels -->
+    <text x="16" y="328" font-family="Roboto,system-ui" font-size="8" fill="#7A7470">00:00</text>
+    <text x="110" y="328" font-family="Roboto,system-ui" font-size="8" fill="#7A7470" text-anchor="middle">01:47</text>
+    <text x="204" y="328" font-family="Roboto,system-ui" font-size="8" fill="#7A7470" text-anchor="end">04:52</text>
+    <!-- controls -->
+    <rect x="0" y="334" width="220" height="60" fill="#0D0B09"/>
+    <text x="30" y="360" font-family="Roboto,system-ui" font-size="9" fill="#C0B4AC" text-anchor="middle">–5с</text>
+    <text x="68" y="363" font-family="Roboto,system-ui" font-size="16" fill="#7A7470" text-anchor="middle">⏮</text>
+    <circle cx="110" cy="358" r="16" fill="#E87722"/>
+    <polygon points="106,351 106,365 120,358" fill="#1A0A00"/>
+    <text x="152" y="363" font-family="Roboto,system-ui" font-size="16" fill="#7A7470" text-anchor="middle">⏭</text>
+    <text x="190" y="360" font-family="Roboto,system-ui" font-size="9" fill="#C0B4AC" text-anchor="middle">+5с</text>
+    <!-- speed -->
+    <rect x="62" y="374" width="28" height="16" rx="5" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="76" y="385" font-family="Roboto,system-ui" font-size="9" fill="#C89A6A" text-anchor="middle">0.5×</text>
+    <rect x="96" y="374" width="28" height="16" rx="5" fill="#E87722"/>
+    <text x="110" y="385" font-family="Roboto,system-ui" font-size="9" font-weight="700" fill="#1A0A00" text-anchor="middle">1×</text>
+    <rect x="130" y="374" width="28" height="16" rx="5" fill="#261E1A" stroke="#33281F" stroke-width="1"/>
+    <text x="144" y="385" font-family="Roboto,system-ui" font-size="9" fill="#C89A6A" text-anchor="middle">2×</text>
+  </g>
+</g>
+
+<!-- ════════════════════════════════════════ -->
+<!-- ROW 2: Onboarding slides 1-4            -->
+<!-- ════════════════════════════════════════ -->
+
+<text x="80" y="618" font-family="Roboto,system-ui,sans-serif" font-size="11" fill="#5A5040" letter-spacing="0.08em">ONBOARDING FLOW</text>
+<line x1="80" y1="626" x2="1520" y2="626" stroke="#2A2018" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+<text x="190" y="650" font-family="Roboto,system-ui" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">SLIDE 1 — КОНЦЕПЦІЯ</text>
+<text x="480" y="650" font-family="Roboto,system-ui" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">SLIDE 2 — ДИСТ. СТАРТ</text>
+<text x="770" y="650" font-family="Roboto,system-ui" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">SLIDE 3 — ЦИКЛ ЗАПИСУ</text>
+<text x="1060" y="650" font-family="Roboto,system-ui" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">SLIDE 4 — ДОЗВОЛИ</text>
+<text x="1350" y="650" font-family="Roboto,system-ui" font-size="11" fill="#5A5040" text-anchor="middle" letter-spacing="0.08em">SPLASH SCREEN</text>
+
+<!-- OB PHONE 1 -->
+<g transform="translate(80,660)">
+  <rect width="220" height="400" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph6)">
+    <rect width="220" height="400" fill="#1A1210"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038">9:41</text>
+    <text x="204" y="36" font-family="Roboto,system-ui" font-size="10" fill="#5A5040" text-anchor="end">Пропустити</text>
+    <!-- illustration -->
+    <circle cx="110" cy="130" r="68" fill="none" stroke="#E87722" stroke-width="4"/>
+    <circle cx="110" cy="130" r="42" fill="none" stroke="#E87722" stroke-width="2.5" opacity="0.45"/>
+    <line x1="110" y1="62" x2="110" y2="84" stroke="#E87722" stroke-width="4" stroke-linecap="round"/>
+    <line x1="110" y1="176" x2="110" y2="198" stroke="#E87722" stroke-width="4" stroke-linecap="round"/>
+    <line x1="42" y1="130" x2="64" y2="130" stroke="#E87722" stroke-width="4" stroke-linecap="round"/>
+    <line x1="156" y1="130" x2="178" y2="130" stroke="#E87722" stroke-width="4" stroke-linecap="round"/>
+    <polygon points="96,114 96,146 128,130" fill="#FFFFFF"/>
+    <circle cx="160" cy="76" r="12" fill="#E87722"/>
+    <circle cx="160" cy="76" r="5.5" fill="#1A1210"/>
+    <!-- text content -->
+    <text x="16" y="222" font-family="Roboto,system-ui" font-size="8" fill="#E87722" letter-spacing="0.12em">КОНЦЕПЦІЯ</text>
+    <text x="16" y="238" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">Телефон на трубі —</text>
+    <text x="16" y="254" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">автозапис кожного пострілу.</text>
+    <text x="16" y="270" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">ShotLog кріпиться на зрительну трубу</text>
+    <text x="16" y="282" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">і пише відеокліп на кожен постріл.</text>
+    <!-- badge -->
+    <rect x="16" y="292" width="188" height="28" rx="7" fill="#201810" stroke="#3A2E1A" stroke-width="1"/>
+    <text x="36" y="308" font-family="Roboto,system-ui" font-size="9" font-weight="500" fill="#C09060">Без хмари</text>
+    <text x="36" y="318" font-family="Roboto,system-ui" font-size="8" fill="#7A6A58">Дані не покидають телефон</text>
+    <!-- dots + btn -->
+    <rect x="128" y="350" width="76" height="28" rx="8" fill="#E87722"/>
+    <text x="166" y="368" font-family="Roboto,system-ui" font-size="10" font-weight="700" fill="#1A0A00" text-anchor="middle">Далі</text>
+    <rect x="16" y="358" width="18" height="6" rx="3" fill="#E87722"/>
+    <rect x="38" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="48" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="58" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+  </g>
+</g>
+
+<!-- OB PHONE 2 -->
+<g transform="translate(370,660)">
+  <rect width="220" height="400" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph7)">
+    <rect width="220" height="400" fill="#1A1210"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038">9:41</text>
+    <!-- BT illustration -->
+    <rect x="78" y="30" width="64" height="92" rx="32" fill="#201810" stroke="#3A2E1A" stroke-width="2"/>
+    <rect x="90" y="44" width="40" height="24" rx="12" fill="none" stroke="#E87722" stroke-width="1.5"/>
+    <text x="110" y="60" font-family="Roboto,system-ui" font-size="11" font-weight="700" fill="#E87722" text-anchor="middle">BT</text>
+    <circle cx="110" cy="98" r="8" fill="#2A1E14" stroke="#E87722" stroke-width="1.2"/>
+    <line x1="110" y1="122" x2="110" y2="138" stroke="#3A3020" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <rect x="24" y="138" width="172" height="34" rx="7" fill="#201810" stroke="#3A2E1A" stroke-width="1.5"/>
+    <rect x="30" y="144" width="34" height="22" rx="4" fill="#2A3818" stroke="#3A5020" stroke-width="1"/>
+    <text x="47" y="158" font-family="Roboto,system-ui" font-size="8" fill="#7A9A50" text-anchor="middle">таймер</text>
+    <rect x="68" y="144" width="34" height="22" rx="4" fill="#3A2010" stroke="#E87722" stroke-width="1"/>
+    <text x="85" y="158" font-family="Roboto,system-ui" font-size="8" fill="#E87722" text-anchor="middle">слухає</text>
+    <rect x="106" y="144" width="34" height="22" rx="4" fill="#2A3818" stroke="#3A5020" stroke-width="1"/>
+    <text x="123" y="158" font-family="Roboto,system-ui" font-size="8" fill="#7A9A50" text-anchor="middle">постріл</text>
+    <rect x="144" y="144" width="34" height="22" rx="4" fill="#201810" stroke="#3A2E1A" stroke-width="1"/>
+    <text x="161" y="158" font-family="Roboto,system-ui" font-size="8" fill="#5A5040" text-anchor="middle">кліп</text>
+    <!-- text -->
+    <text x="16" y="196" font-family="Roboto,system-ui" font-size="8" fill="#E87722" letter-spacing="0.12em">ДИСТАНЦІЙНИЙ СТАРТ</text>
+    <text x="16" y="212" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">BT-кнопка запускає</text>
+    <text x="16" y="228" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">цикл запису з позиції.</text>
+    <text x="16" y="244" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">Натиснув кнопку — пішов таймер.</text>
+    <text x="16" y="256" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">Тривалість налаштовується під твій ритм.</text>
+    <rect x="16" y="266" width="188" height="28" rx="7" fill="#201810" stroke="#3A2E1A" stroke-width="1"/>
+    <text x="36" y="282" font-family="Roboto,system-ui" font-size="9" font-weight="500" fill="#C09060">Bluetooth</text>
+    <text x="36" y="292" font-family="Roboto,system-ui" font-size="8" fill="#7A6A58">Сумісна будь-яка BT-кнопка</text>
+    <!-- dots + btn -->
+    <rect x="128" y="350" width="76" height="28" rx="8" fill="#E87722"/>
+    <text x="166" y="368" font-family="Roboto,system-ui" font-size="10" font-weight="700" fill="#1A0A00" text-anchor="middle">Далі</text>
+    <rect x="16" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="26" y="358" width="18" height="6" rx="3" fill="#E87722"/>
+    <rect x="48" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="58" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+  </g>
+</g>
+
+<!-- OB PHONE 3 -->
+<g transform="translate(660,660)">
+  <rect width="220" height="400" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g clip-path="url(#ph8)">
+    <rect width="220" height="400" fill="#1A1210"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038">9:41</text>
+    <!-- cycle illustration -->
+    <text x="110" y="38" font-family="Roboto,system-ui" font-size="7" fill="#4A4038" text-anchor="middle" letter-spacing="0.06em">ОДИН ЦИКЛ</text>
+    <rect x="8" y="60" width="204" height="48" rx="7" fill="#201810" stroke="#3A2E1A" stroke-width="1.5"/>
+    <rect x="8" y="60" width="46" height="48" rx="5" fill="#243018" stroke="#3A5020" stroke-width="1"/>
+    <text x="31" y="88" font-family="Roboto,system-ui" font-size="9" fill="#7A9A50" text-anchor="middle">pre-roll</text>
+    <rect x="56" y="54" width="108" height="60" rx="5" fill="#2A1808" stroke="#E87722" stroke-width="2"/>
+    <circle cx="110" cy="84" r="14" fill="#E87722" opacity="0.15"/>
+    <circle cx="110" cy="84" r="7" fill="#E87722"/>
+    <text x="110" y="104" font-family="Roboto,system-ui" font-size="7" fill="#E87722" text-anchor="middle" letter-spacing="0.04em">ПОСТРІЛ</text>
+    <rect x="166" y="60" width="46" height="48" rx="5" fill="#243018" stroke="#3A5020" stroke-width="1"/>
+    <text x="189" y="88" font-family="Roboto,system-ui" font-size="9" fill="#7A9A50" text-anchor="middle">post-roll</text>
+    <line x1="110" y1="114" x2="110" y2="128" stroke="#E87722" stroke-width="1.5" stroke-dasharray="2 2"/>
+    <polygon points="105,128 115,128 110,135" fill="#E87722"/>
+    <rect x="64" y="136" width="92" height="22" rx="5" fill="#201810" stroke="#3A2E1A" stroke-width="1.2"/>
+    <polygon points="74,143 74,152 82,147.5" fill="#E87722"/>
+    <rect x="86" y="146" width="38" height="2" rx="1" fill="#3A2E1A"/>
+    <rect x="86" y="146" width="18" height="2" rx="1" fill="#E87722"/>
+    <circle cx="104" cy="147" r="3" fill="#E87722"/>
+    <!-- text -->
+    <text x="16" y="178" font-family="Roboto,system-ui" font-size="8" fill="#E87722" letter-spacing="0.12em">ЦИКЛ ЗАПИСУ</text>
+    <text x="16" y="194" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">Pre-roll, постріл, post-roll —</text>
+    <text x="16" y="210" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">один чіткий кліп.</text>
+    <text x="16" y="226" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">Після збереження — чекає наступного</text>
+    <text x="16" y="238" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">тригера. Серія без вставання.</text>
+    <rect x="16" y="248" width="188" height="28" rx="7" fill="#201810" stroke="#3A2E1A" stroke-width="1"/>
+    <text x="36" y="264" font-family="Roboto,system-ui" font-size="9" font-weight="500" fill="#C09060">Серія</text>
+    <text x="36" y="274" font-family="Roboto,system-ui" font-size="8" fill="#7A6A58">Скільки пострілів — стільки кліпів</text>
+    <!-- dots + btn -->
+    <rect x="128" y="350" width="76" height="28" rx="8" fill="#E87722"/>
+    <text x="166" y="368" font-family="Roboto,system-ui" font-size="10" font-weight="700" fill="#1A0A00" text-anchor="middle">Далі</text>
+    <rect x="16" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="26" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="36" y="358" width="18" height="6" rx="3" fill="#E87722"/>
+    <rect x="58" y="360" width="6" height="6" rx="3" fill="#2E2018"/>
+  </g>
+</g>
+
+<!-- OB PHONE 4: PERMISSIONS -->
+<g transform="translate(950,660)">
+  <rect width="220" height="400" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g>
+    <rect width="220" height="400" rx="36" fill="#1A1210"/>
+    <text x="16" y="15" font-family="Roboto,system-ui" font-size="9" fill="#4A4038">9:41</text>
+    <!-- illustration -->
+    <circle cx="110" cy="80" r="34" fill="#201810" stroke="#3A2E1A" stroke-width="1.5"/>
+    <circle cx="110" cy="80" r="20" fill="#2A1E14" stroke="#E87722" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="110" cy="80" r="7" fill="#E87722"/>
+    <line x1="110" y1="46" x2="110" y2="57" stroke="#E87722" stroke-width="2" stroke-linecap="round"/>
+    <line x1="110" y1="103" x2="110" y2="114" stroke="#E87722" stroke-width="2" stroke-linecap="round"/>
+    <line x1="76" y1="80" x2="87" y2="80" stroke="#E87722" stroke-width="2" stroke-linecap="round"/>
+    <line x1="133" y1="80" x2="144" y2="80" stroke="#E87722" stroke-width="2" stroke-linecap="round"/>
+    <!-- 3 perm boxes -->
+    <rect x="16" y="126" width="56" height="52" rx="7" fill="#201810" stroke="#E87722" stroke-width="1.2"/>
+    <circle cx="44" cy="143" r="6" fill="#2A1E14" stroke="#E87722" stroke-width="1"/>
+    <text x="44" y="163" font-family="Roboto,system-ui" font-size="8" fill="#C09060" text-anchor="middle">Камера</text>
+    <text x="44" y="172" font-family="Roboto,system-ui" font-size="7" fill="#5A5040" text-anchor="middle">+ Мікрофон</text>
+
+    <rect x="82" y="126" width="56" height="52" rx="7" fill="#201810" stroke="#4A7AAA" stroke-width="1.2"/>
+    <text x="110" y="150" font-family="Roboto,system-ui" font-size="10" fill="#4A9EE0" text-anchor="middle">BT</text>
+    <text x="110" y="163" font-family="Roboto,system-ui" font-size="8" fill="#6A8AAA" text-anchor="middle">Bluetooth</text>
+    <text x="110" y="172" font-family="Roboto,system-ui" font-size="7" fill="#5A5040" text-anchor="middle">для кнопки</text>
+
+    <rect x="148" y="126" width="56" height="52" rx="7" fill="#201810" stroke="#3A2E1A" stroke-width="1.2"/>
+    <rect x="160" y="138" width="30" height="20" rx="2" fill="#1A1210" stroke="#4A4038" stroke-width="1"/>
+    <line x1="152" y1="126" x2="200" y2="178" stroke="#6A2020" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="200" y1="126" x2="152" y2="178" stroke="#6A2020" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="176" y="172" font-family="Roboto,system-ui" font-size="7" fill="#4A4038" text-anchor="middle">Геолокація</text>
+    <!-- text -->
+    <text x="16" y="200" font-family="Roboto,system-ui" font-size="8" fill="#E87722" letter-spacing="0.12em">ДОЗВОЛИ</text>
+    <text x="16" y="216" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">Камера, мікрофон і</text>
+    <text x="16" y="232" font-family="Roboto,system-ui" font-size="13" font-weight="700" fill="#F0EAE5">Bluetooth — більше нічого.</text>
+    <text x="16" y="248" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">ShotLog запитує лише три системні дозволи.</text>
+    <text x="16" y="260" font-family="Roboto,system-ui" font-size="9" fill="#7A6A58">Доступ до геолокації не потрібен.</text>
+    <rect x="16" y="270" width="188" height="28" rx="7" fill="#201810" stroke="#3A2E1A" stroke-width="1"/>
+    <text x="36" y="286" font-family="Roboto,system-ui" font-size="9" font-weight="500" fill="#C09060">Приватність</text>
+    <text x="36" y="296" font-family="Roboto,system-ui" font-size="8" fill="#7A6A58">Нульовий мережевий трафік</text>
+    <!-- final btn -->
+    <rect x="16" y="344" width="188" height="28" rx="8" fill="#E87722"/>
+    <text x="110" y="362" font-family="Roboto,system-ui" font-size="10" font-weight="700" fill="#1A0A00" text-anchor="middle">Надати доступ і почати</text>
+    <!-- dots -->
+    <rect x="16" y="378" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="26" y="378" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="36" y="378" width="6" height="6" rx="3" fill="#2E2018"/>
+    <rect x="46" y="376" width="18" height="6" rx="3" fill="#E87722"/>
+  </g>
+</g>
+
+<!-- SPLASH PHONE -->
+<g transform="translate(1240,660)">
+  <rect width="220" height="400" rx="36" fill="#1A1210" stroke="#2E2018" stroke-width="2"/>
+  <g>
+    <rect width="220" height="400" rx="36" fill="#1A1210"/>
+    <!-- splash reticle centered -->
+    <circle cx="110" cy="170" r="72" fill="none" stroke="#E87722" stroke-width="5"/>
+    <circle cx="110" cy="170" r="45" fill="none" stroke="#E87722" stroke-width="3" opacity="0.5"/>
+    <line x1="110" y1="98" x2="110" y2="120" stroke="#E87722" stroke-width="5" stroke-linecap="round"/>
+    <line x1="110" y1="220" x2="110" y2="242" stroke="#E87722" stroke-width="5" stroke-linecap="round"/>
+    <line x1="38" y1="170" x2="60" y2="170" stroke="#E87722" stroke-width="5" stroke-linecap="round"/>
+    <line x1="160" y1="170" x2="182" y2="170" stroke="#E87722" stroke-width="5" stroke-linecap="round"/>
+    <polygon points="94,152 94,188 130,170" fill="#FFFFFF"/>
+    <circle cx="164" cy="116" r="13" fill="#E87722"/>
+    <circle cx="164" cy="116" r="5.5" fill="#1A1210"/>
+    <!-- wordmark -->
+    <text x="110" y="272" font-family="Roboto,system-ui" font-size="20" font-weight="700" fill="#F0EAE5" text-anchor="middle" letter-spacing="0.12em">SHOTLOG</text>
+    <text x="110" y="288" font-family="Roboto,system-ui" font-size="9" fill="#5A5040" text-anchor="middle" letter-spacing="0.16em">SESSION TRACKER</text>
+  </g>
+</g>
+
+<!-- ═══ DESIGN TOKENS FOOTER ═══ -->
+<line x1="80" y1="1072" x2="1520" y2="1072" stroke="#2A2018" stroke-width="0.5"/>
+<circle cx="104" cy="1086" r="7" fill="#1A1210" stroke="#2A2018" stroke-width="1"/>
+<text x="118" y="1090" font-family="Roboto,system-ui" font-size="9" fill="#5A5040">#1A1210 bg</text>
+<circle cx="210" cy="1086" r="7" fill="#261E1A" stroke="#2A2018" stroke-width="1"/>
+<text x="224" y="1090" font-family="Roboto,system-ui" font-size="9" fill="#5A5040">#261E1A surface</text>
+<circle cx="336" cy="1086" r="7" fill="#E87722"/>
+<text x="350" y="1090" font-family="Roboto,system-ui" font-size="9" fill="#5A5040">#E87722 accent</text>
+<circle cx="440" cy="1086" r="7" fill="#F0EAE5"/>
+<text x="454" y="1090" font-family="Roboto,system-ui" font-size="9" fill="#5A5040">#F0EAE5 text</text>
+<circle cx="540" cy="1086" r="7" fill="#7A6A58"/>
+<text x="554" y="1090" font-family="Roboto,system-ui" font-size="9" fill="#5A5040">#7A6A58 secondary</text>
+<text x="680" y="1090" font-family="Roboto,system-ui" font-size="9" fill="#3A3028">Material 3 · Roboto · 16dp cards · 2px stroke icons · Dark warm theme</text>
+<text x="1520" y="1090" font-family="Roboto,system-ui" font-size="9" fill="#3A3028" text-anchor="end">ShotLog v1.0 · Android</text>
+</svg>

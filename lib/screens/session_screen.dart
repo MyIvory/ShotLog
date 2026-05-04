@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/app_settings.dart';
 import '../providers/session_provider.dart';
@@ -52,12 +54,46 @@ class SessionScreen extends StatelessWidget {
 
 // ── Camera preview + state overlay ──────────────────────────────────────────
 
-class _CameraView extends StatelessWidget {
+class _CameraView extends StatefulWidget {
   final SessionProvider sp;
   const _CameraView({required this.sp});
 
   @override
+  State<_CameraView> createState() => _CameraViewState();
+}
+
+class _CameraViewState extends State<_CameraView> {
+  bool _flashVisible = false;
+  Timer? _flashTimer;
+  int _prevShotCount = 0;
+
+  @override
+  void didUpdateWidget(_CameraView old) {
+    super.didUpdateWidget(old);
+    if (widget.sp.shots.length > _prevShotCount) {
+      _prevShotCount = widget.sp.shots.length;
+      _triggerFlash();
+      HapticFeedback.mediumImpact();
+    }
+  }
+
+  void _triggerFlash() {
+    setState(() => _flashVisible = true);
+    _flashTimer?.cancel();
+    _flashTimer = Timer(const Duration(milliseconds: 200), () {
+      if (mounted) setState(() => _flashVisible = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _flashTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final sp = widget.sp;
     return Stack(
       children: [
         if (sp.hasCameraPreview && sp.cameraController != null)
@@ -70,7 +106,40 @@ class _CameraView extends StatelessWidget {
           state: sp.state,
           countdownRemaining: sp.countdownRemaining,
           shotCount: sp.shots.length,
+          lastTriggerDbfs: sp.shots.lastOrNull?.triggerDbfs,
         ),
+        // Countdown full-screen overlay
+        if (sp.state == SessionState.countdown)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(
+                color: Colors.black54,
+                child: Center(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, anim) =>
+                        ScaleTransition(scale: anim, child: child),
+                    child: Text(
+                      '${sp.countdownRemaining}',
+                      key: ValueKey(sp.countdownRemaining),
+                      style: const TextStyle(
+                        fontSize: 96,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        // Shot detection flash
+        if (_flashVisible)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(color: Colors.white.withValues(alpha: 0.3)),
+            ),
+          ),
       ],
     );
   }
@@ -100,109 +169,87 @@ class _AmplitudePanelState extends State<_AmplitudePanel> {
         if (!active) _dbfs = -80.0;
 
         final threshold = widget.sp.detectionThreshold;
-        // Map dBFS [-80, 0] → [0.0, 1.0]
-        final level = ((_dbfs + 80) / 80).clamp(0.0, 1.0);
+        final level     = ((_dbfs + 80) / 80).clamp(0.0, 1.0);
         final threshPos = ((threshold + 80) / 80).clamp(0.0, 1.0);
-        final triggered = _dbfs >= threshold;
-        final barColor = triggered ? Colors.redAccent : Colors.greenAccent;
 
         return Container(
-          color: Colors.black,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          color: const Color(0xFF0A0D08),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    active ? Icons.mic : Icons.mic_off,
-                    size: 14,
-                    color: active ? Colors.greenAccent : Colors.grey,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    active
-                        ? 'Мікрофон: ${_dbfs.toStringAsFixed(1)} dBFS'
-                        : 'Мікрофон неактивний',
-                    style: TextStyle(
-                      color: active ? Colors.white70 : Colors.grey,
-                      fontSize: 11,
-                    ),
-                  ),
-                  if (triggered)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8),
-                      child: Text('🔴 ПОСТРІЛ!',
-                          style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
-                ],
+              const Text(
+                'Рівень звуку',
+                style: TextStyle(color: Color(0xFF5A5450), fontSize: 8),
               ),
               const SizedBox(height: 4),
-              LayoutBuilder(
-                builder: (ctx, constraints) {
-                  final w = constraints.maxWidth;
-                  return Stack(
-                    children: [
-                      // Background
-                      Container(
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[850],
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      // Level bar
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 50),
-                        height: 12,
-                        width: w * level,
-                        decoration: BoxDecoration(
-                          color: barColor,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      // Threshold marker
-                      Positioned(
-                        left: w * threshPos - 1,
-                        child: Container(
-                          width: 2,
-                          height: 12,
+              // ── Bar ──────────────────────────────────────────────────
+              LayoutBuilder(builder: (ctx, box) {
+                final w = box.maxWidth;
+                final threshX = (w * threshPos).clamp(0.0, w);
+                return Column(
+                  children: [
+                    SizedBox(
+                      height: 14,
+                      child: Stack(children: [
+                        // Track background
+                        Container(
                           decoration: BoxDecoration(
-                            color: Colors.orange,
-                            borderRadius: BorderRadius.circular(1),
+                            color: const Color(0xFF1A1A0A),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  const Text('-80 ', style: TextStyle(color: Colors.grey, fontSize: 9)),
-                  Expanded(
-                    child: Text(
-                      '▲ поріг ${threshold.toStringAsFixed(0)} dBFS',
-                      style: const TextStyle(color: Colors.orange, fontSize: 9),
-                      textAlign: TextAlign.center,
+                        // Level fill
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 50),
+                          width: w * level,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2A3A10),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        // Threshold line
+                        Positioned(
+                          left: threshX - 0.75,
+                          top: 0, bottom: 0,
+                          child: Container(
+                            width: 1.5,
+                            color: const Color(0xFFE87722),
+                          ),
+                        ),
+                      ]),
                     ),
-                  ),
-                  const Text(' 0', style: TextStyle(color: Colors.grey, fontSize: 9)),
-                  const SizedBox(width: 8),
-                  _ThresholdButton(
-                    label: '−5',
-                    onTap: () => context.read<SessionProvider>()
-                        .updateDetectionThreshold((threshold - 5).clamp(-80, -1)),
-                  ),
-                  const SizedBox(width: 4),
-                  _ThresholdButton(
-                    label: '+5',
-                    onTap: () => context.read<SessionProvider>()
-                        .updateDetectionThreshold((threshold + 5).clamp(-80, -1)),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 3),
+                    // ── Labels ───────────────────────────────────────
+                    SizedBox(
+                      height: 10,
+                      child: Stack(children: [
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('–60 dBFS',
+                              style: TextStyle(
+                                  color: Color(0xFF3A3430), fontSize: 7)),
+                        ),
+                        // Threshold label at dynamic position
+                        Positioned(
+                          left: (threshX - 12).clamp(0.0, w - 24),
+                          child: Text(
+                            threshold.toStringAsFixed(0),
+                            style: const TextStyle(
+                                color: Color(0xFFE87722), fontSize: 7),
+                          ),
+                        ),
+                        const Align(
+                          alignment: Alignment.centerRight,
+                          child: Text('0',
+                              style: TextStyle(
+                                  color: Color(0xFF3A3430), fontSize: 7)),
+                        ),
+                      ]),
+                    ),
+                  ],
+                );
+              }),
             ],
           ),
         );
@@ -219,35 +266,50 @@ class _BottomBar extends StatelessWidget {
 
   const _BottomBar({required this.sp, required this.settings});
 
+  static const _btnStyle = (
+    bg: Color(0xFFE87722),
+    fg: Color(0xFF1A0A00),
+  );
+
   @override
   Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final hasShots = sp.shots.isNotEmpty;
+
+    final btnStyle = FilledButton.styleFrom(
+      backgroundColor: _btnStyle.bg,
+      foregroundColor: _btnStyle.fg,
+      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      minimumSize: const Size(0, 0),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+
     return Container(
-      color: Colors.grey[900],
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: const Color(0xFF0A0D08),
+      padding: EdgeInsets.fromLTRB(12, 8, 12, 10 + bottomPad),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          TextButton.icon(
-            icon: const Icon(Icons.stop_circle_outlined, color: Colors.redAccent),
-            label: const Text('Завершити', style: TextStyle(color: Colors.redAccent)),
-            onPressed: () => _confirmEnd(context),
-          ),
-          // TODO: remove before release
-          if (sp.state == SessionState.ready)
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-              icon: const Icon(Icons.radio_button_on, color: Colors.white),
-              label: const Text('BT тест', style: TextStyle(color: Colors.white)),
-              onPressed: () => context.read<SessionProvider>().triggerButton(),
+          if (hasShots) ...[
+            Expanded(
+              child: FilledButton.icon(
+                style: btnStyle,
+                onPressed: () => _openLastShot(context),
+                icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                label: const Text('Перегляд'),
+              ),
             ),
-          if (sp.shots.isNotEmpty)
-            TextButton.icon(
-              icon: const Icon(Icons.play_circle_outline, color: Colors.white),
-              label: const Text('Останній постріл', style: TextStyle(color: Colors.white)),
-              onPressed: () => _openLastShot(context),
-            )
-          else if (sp.state != SessionState.ready)
-            const Text('Очікування...', style: TextStyle(color: Colors.grey)),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: FilledButton.icon(
+              style: btnStyle,
+              onPressed: () => _confirmEnd(context),
+              icon: const Icon(Icons.stop_rounded, size: 18),
+              label: const Text('Завершити'),
+            ),
+          ),
         ],
       ),
     );
@@ -283,26 +345,3 @@ class _BottomBar extends StatelessWidget {
   }
 }
 
-// ── Threshold step button ────────────────────────────────────────────────────
-
-class _ThresholdButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _ThresholdButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: Colors.orange.withValues(alpha: 0.2),
-          border: Border.all(color: Colors.orange, width: 1),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(label, style: const TextStyle(color: Colors.orange, fontSize: 11)),
-      ),
-    );
-  }
-}

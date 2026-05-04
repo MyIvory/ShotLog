@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/app_settings.dart';
 import '../services/settings_service.dart';
+import '../widgets/threshold_picker.dart';
 import 'equipment_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -14,6 +16,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _svc = SettingsService();
   AppSettings _s = const AppSettings();
   bool _loading = true;
+  Timer? _saveDebounce;
 
   @override
   void initState() {
@@ -24,9 +27,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }));
   }
 
-  Future<void> _save() async {
-    await _svc.save(_s);
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Збережено')));
+  @override
+  void dispose() {
+    _saveDebounce?.cancel();
+    super.dispose();
+  }
+
+  void _onChange(AppSettings newSettings) {
+    setState(() => _s = newSettings);
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 600), () async {
+      await _svc.save(_s);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Збережено'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -45,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             min: 1,
             max: 10,
             unit: 'с',
-            onChanged: (v) => setState(() => _s = _s.copyWith(countdownSec: v)),
+            onChanged: (v) => _onChange(_s.copyWith(countdownSec: v)),
           ),
           _IntSlider(
             label: 'Таймаут без пострілу',
@@ -53,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             min: 5,
             max: 30,
             unit: 'с',
-            onChanged: (v) => setState(() => _s = _s.copyWith(timeoutSec: v)),
+            onChanged: (v) => _onChange(_s.copyWith(timeoutSec: v)),
           ),
           _IntSlider(
             label: 'Запис після пострілу (post-roll)',
@@ -61,7 +82,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             min: 1,
             max: 10,
             unit: 'с',
-            onChanged: (v) => setState(() => _s = _s.copyWith(postRollSec: v)),
+            helpText: 'Скільки секунд відео записується після пострілу',
+            onChanged: (v) => _onChange(_s.copyWith(postRollSec: v)),
           ),
           _IntSlider(
             label: 'Перегляд до пострілу (pre-roll)',
@@ -69,33 +91,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
             min: 0,
             max: 5,
             unit: 'с',
-            onChanged: (v) => setState(() => _s = _s.copyWith(preRollSec: v)),
+            helpText: 'З якого моменту розпочинати відтворення при перегляді кліпу',
+            onChanged: (v) => _onChange(_s.copyWith(preRollSec: v)),
           ),
           const Divider(height: 32),
           _Section('Детекція пострілу'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Поріг гучності: ${_s.detectionDbfs.toStringAsFixed(0)} dBFS',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const Text(
-                  '0 = найгучніше, -80 = тиша. Чим ближче до 0 — тим голосніше повинен бути постріл.',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                Slider(
-                  value: _s.detectionDbfs,
-                  min: -80,
-                  max: -5,
-                  divisions: 75,
-                  label: '${_s.detectionDbfs.toStringAsFixed(0)} dBFS',
-                  onChanged: (v) => setState(() => _s = _s.copyWith(detectionDbfs: v)),
-                ),
-              ],
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+            leading: const Icon(Icons.graphic_eq),
+            title: const Text('Поріг гучності'),
+            subtitle: Text(
+              '${_s.detectionDbfs.toStringAsFixed(0)} dBFS — натисніть для налаштування',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
             ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              final result = await showThresholdPicker(context, _s.detectionDbfs);
+              if (result != null) {
+                _onChange(_s.copyWith(detectionDbfs: result));
+              }
+            },
           ),
           const Divider(height: 32),
           _Section('Спорядження'),
@@ -107,12 +125,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               context,
               MaterialPageRoute(builder: (_) => const EquipmentScreen()),
             ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            icon: const Icon(Icons.save),
-            label: const Text('Зберегти налаштування'),
-            onPressed: _save,
           ),
         ],
       ),
@@ -127,7 +139,12 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 8, top: 4),
-        child: Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.grey)),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
       );
 }
 
@@ -137,6 +154,7 @@ class _IntSlider extends StatelessWidget {
   final int min;
   final int max;
   final String unit;
+  final String? helpText;
   final ValueChanged<int> onChanged;
 
   const _IntSlider({
@@ -145,6 +163,7 @@ class _IntSlider extends StatelessWidget {
     required this.min,
     required this.max,
     required this.unit,
+    this.helpText,
     required this.onChanged,
   });
 
@@ -154,6 +173,16 @@ class _IntSlider extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('$label: $value $unit', style: Theme.of(context).textTheme.bodyMedium),
+        if (helpText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              helpText!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
         Slider(
           value: value.toDouble(),
           min: min.toDouble(),

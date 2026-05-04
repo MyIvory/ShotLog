@@ -58,8 +58,27 @@ class SessionProvider extends ChangeNotifier {
 
     await _video.initialize();
 
-    final id = await _sessionRepo.insert(session);
-    _activeSession = session.copyWith(id: id);
+    final sessionWithThreshold = session.copyWith(detectionDbfs: settings.detectionDbfs);
+    final id = await _sessionRepo.insert(sessionWithThreshold);
+    _activeSession = sessionWithThreshold.copyWith(id: id);
+
+    _bt.onButtonPressed = _onButtonPressed;
+    _bt.start();
+
+    _setState(SessionState.ready);
+  }
+
+  /// Continues an existing session (shots are appended to it).
+  Future<void> continueSession(Session session, AppSettings settings) async {
+    _settings = settings;
+    _shots.clear();
+
+    // Load existing shots so new shot numbers continue correctly.
+    final existing = await _shotRepo.getBySession(session.id!);
+    _shots.addAll(existing);
+
+    await _video.initialize();
+    _activeSession = session;
 
     _bt.onButtonPressed = _onButtonPressed;
     _bt.start();
@@ -84,7 +103,10 @@ class SessionProvider extends ChangeNotifier {
       _countdownRemaining--;
       if (_countdownRemaining <= 0) {
         t.cancel();
-        _startRecording();
+        _startRecording().catchError((e) {
+          debugPrint('Recording start error: $e');
+          _setState(SessionState.ready);
+        });
       } else {
         _sound.playCountdownBeep();
         notifyListeners();
@@ -96,24 +118,35 @@ class SessionProvider extends ChangeNotifier {
     _setState(SessionState.recordingArmed);
     _recordingStartTime = DateTime.now();
 
-    await _video.startRecording();
-
-    _audio.onShotDetected = _onShotDetected;
-    await _audio.start(_settings.detectionDbfs);
-
-    _timeoutTimer = Timer(Duration(seconds: _settings.timeoutSec), _onTimeout);
+    try {
+      await _video.startRecording();
+      _audio.onShotDetected = _onShotDetected;
+      await _audio.start(_settings.detectionDbfs);
+      _timeoutTimer = Timer(Duration(seconds: _settings.timeoutSec), _onTimeout);
+    } catch (e) {
+      debugPrint('_startRecording failed: $e');
+      await _audio.stop().catchError((_) async {});
+      await _video.stopRecording(delete: true).catchError((_) async => null);
+      _setState(SessionState.ready);
+    }
   }
 
   void _onShotDetected() {
     if (_state != SessionState.recordingArmed) return;
     final offsetMs = DateTime.now().difference(_recordingStartTime!).inMilliseconds;
+    final triggerDbfs = _audio.lastDbfs;
     _timeoutTimer?.cancel();
     _setState(SessionState.recordingPost);
-    _audio.stop();
+    _audio.stop().catchError((e) {
+      debugPrint('audio.stop error: $e');
+    });
 
     _postRollTimer = Timer(
       Duration(seconds: _settings.postRollSec),
-      () => _finishRecording(offsetMs),
+      () => _finishRecording(offsetMs, triggerDbfs).catchError((e) {
+        debugPrint('_finishRecording error: $e');
+        _setState(SessionState.ready);
+      }),
     );
   }
 
@@ -125,28 +158,34 @@ class SessionProvider extends ChangeNotifier {
     _setState(SessionState.ready);
   }
 
-  Future<void> _finishRecording(int shotOffsetMs) async {
+  Future<void> _finishRecording(int shotOffsetMs, double triggerDbfs) async {
     _setState(SessionState.processing);
-    final clipPath = await _video.stopRecording(delete: false);
+    try {
+      final clipPath = await _video.stopRecording(delete: false);
 
-    if (clipPath != null && _activeSession?.id != null) {
-      final shot = Shot(
-        sessionId: _activeSession!.id!,
-        shotNumber: _shots.length + 1,
-        detectedAt: _recordingStartTime!.add(Duration(milliseconds: shotOffsetMs)),
-        clipPath: clipPath,
-        shotOffsetMs: shotOffsetMs,
-      );
-      final id = await _shotRepo.insert(shot);
-      _shots.add(shot.copyWith(id: id));
+      if (clipPath != null && _activeSession?.id != null) {
+        final shot = Shot(
+          sessionId: _activeSession!.id!,
+          shotNumber: _shots.length + 1,
+          detectedAt: _recordingStartTime!.add(Duration(milliseconds: shotOffsetMs)),
+          clipPath: clipPath,
+          shotOffsetMs: shotOffsetMs,
+          triggerDbfs: triggerDbfs,
+        );
+        final id = await _shotRepo.insert(shot);
+        _shots.add(shot.copyWith(id: id));
 
-      final updated = _activeSession!.copyWith(shotCount: _shots.length);
-      await _sessionRepo.update(updated);
-      _activeSession = updated;
+        final updated = _activeSession!.copyWith(shotCount: _shots.length);
+        await _sessionRepo.update(updated);
+        _activeSession = updated;
+      }
+
+      await _sound.playReady();
+    } catch (e) {
+      debugPrint('_finishRecording inner error: $e');
+    } finally {
+      _setState(SessionState.ready);
     }
-
-    await _sound.playReady();
-    _setState(SessionState.ready);
   }
 
   Future<void> endSession() async {
