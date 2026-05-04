@@ -42,6 +42,8 @@ class SessionProvider extends ChangeNotifier {
   /// Live amplitude stream from microphone (active only during recordingArmed).
   Stream<double> get amplitudeStream => _audio.amplitudeStream;
 
+  Future<void> setZoom(double zoom) => _video.setZoom(zoom);
+
   Future<void> updateDetectionThreshold(double v) async {
     _settings = _settings.copyWith(detectionDbfs: v);
     _audio.updateThreshold(v);

@@ -48,6 +48,11 @@ class VideoRecordingService {
     return destPath;
   }
 
+  Future<void> setZoom(double zoom) async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+    await _controller!.setZoomLevel(zoom);
+  }
+
   Future<void> dispose() async {
     await _controller?.dispose();
     _controller = null;
