@@ -64,8 +64,10 @@ class SessionProvider extends ChangeNotifier {
     final id = await _sessionRepo.insert(sessionWithThreshold);
     _activeSession = sessionWithThreshold.copyWith(id: id);
 
-    _bt.onButtonPressed = _onButtonPressed;
-    _bt.start();
+    if (settings.triggerMode == TriggerMode.bluetooth) {
+      _bt.onButtonPressed = _onButtonPressed;
+      _bt.start();
+    }
 
     _setState(SessionState.ready);
   }
@@ -82,8 +84,10 @@ class SessionProvider extends ChangeNotifier {
     await _video.initialize();
     _activeSession = session;
 
-    _bt.onButtonPressed = _onButtonPressed;
-    _bt.start();
+    if (settings.triggerMode == TriggerMode.bluetooth) {
+      _bt.onButtonPressed = _onButtonPressed;
+      _bt.start();
+    }
 
     _setState(SessionState.ready);
   }

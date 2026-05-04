@@ -44,10 +44,12 @@ class AudioDetectionService {
     _amplitudeSub = _recorder
         .onAmplitudeChanged(const Duration(milliseconds: 50))
         .listen((amp) {
-      _lastDbfs = amp.current;
-      if (!_ampController.isClosed) _ampController.add(amp.current);
+      // amp.current can be NaN/infinity on signal clipping — sanitize before use.
+      final dbfs = amp.current.isFinite ? amp.current : -80.0;
+      _lastDbfs = dbfs;
+      if (!_ampController.isClosed) _ampController.add(dbfs);
 
-      if (amp.current >= _thresholdDbfs && !_debouncing) {
+      if (dbfs >= _thresholdDbfs && !_debouncing) {
         _debouncing = true;
         onShotDetected?.call();
         Future.delayed(const Duration(seconds: 2), () => _debouncing = false);

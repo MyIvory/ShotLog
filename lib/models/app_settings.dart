@@ -1,3 +1,5 @@
+enum TriggerMode { button, bluetooth }
+
 class AppSettings {
   final int countdownSec;
   final int timeoutSec;
@@ -5,6 +7,7 @@ class AppSettings {
   final int preRollSec;
   // dBFS threshold: 0 is loudest, -160 is silence. Default -20 catches very loud sounds only.
   final double detectionDbfs;
+  final TriggerMode triggerMode;
 
   const AppSettings({
     this.countdownSec = 3,
@@ -12,6 +15,7 @@ class AppSettings {
     this.postRollSec = 3,
     this.preRollSec = 2,
     this.detectionDbfs = -20.0,
+    this.triggerMode = TriggerMode.bluetooth,
   });
 
   AppSettings copyWith({
@@ -20,6 +24,7 @@ class AppSettings {
     int? postRollSec,
     int? preRollSec,
     double? detectionDbfs,
+    TriggerMode? triggerMode,
   }) =>
       AppSettings(
         countdownSec: countdownSec ?? this.countdownSec,
@@ -27,5 +32,6 @@ class AppSettings {
         postRollSec: postRollSec ?? this.postRollSec,
         preRollSec: preRollSec ?? this.preRollSec,
         detectionDbfs: detectionDbfs ?? this.detectionDbfs,
+        triggerMode: triggerMode ?? this.triggerMode,
       );
 }

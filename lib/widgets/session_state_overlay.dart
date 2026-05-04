@@ -104,18 +104,21 @@ class _StateChipState extends State<_StateChip>
             if (isRec && _pulse != null) ...[
               AnimatedBuilder(
                 animation: _pulse!,
-                builder: (_, __) => Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color.lerp(
-                      const Color(0xFFFF3B3B),
-                      const Color(0xFF8B1A1A),
-                      _pulse!.value,
+                builder: (_, __) {
+                  final value = _pulse?.value ?? 0.0;
+                  return Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color.lerp(
+                        const Color(0xFFFF3B3B),
+                        const Color(0xFF8B1A1A),
+                        value,
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
               const SizedBox(width: 5),
             ],

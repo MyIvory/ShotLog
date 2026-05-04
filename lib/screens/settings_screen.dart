@@ -95,6 +95,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: (v) => _onChange(_s.copyWith(preRollSec: v)),
           ),
           const Divider(height: 32),
+          _Section('Запуск запису'),
+          _TriggerModeTile(
+            value: _s.triggerMode,
+            onChanged: (v) => _onChange(_s.copyWith(triggerMode: v)),
+          ),
+          const Divider(height: 32),
           _Section('Детекція пострілу'),
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -146,6 +152,36 @@ class _Section extends StatelessWidget {
               ),
         ),
       );
+}
+
+class _TriggerModeTile extends StatelessWidget {
+  final TriggerMode value;
+  final ValueChanged<TriggerMode> onChanged;
+
+  const _TriggerModeTile({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: SegmentedButton<TriggerMode>(
+        segments: const [
+          ButtonSegment(
+            value: TriggerMode.button,
+            label: Text('Кнопка в застосунку'),
+            icon: Icon(Icons.touch_app),
+          ),
+          ButtonSegment(
+            value: TriggerMode.bluetooth,
+            label: Text('Bluetooth брелок'),
+            icon: Icon(Icons.bluetooth),
+          ),
+        ],
+        selected: {value},
+        onSelectionChanged: (s) => onChanged(s.first),
+      ),
+    );
+  }
 }
 
 class _IntSlider extends StatelessWidget {
