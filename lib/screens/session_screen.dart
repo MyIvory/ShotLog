@@ -102,6 +102,12 @@ class _CameraViewState extends State<_CameraView> {
           )
         else
           const Center(child: CircularProgressIndicator()),
+        if (sp.hasCameraPreview && sp.cameraController != null)
+          Positioned(
+            right: 12,
+            bottom: 16,
+            child: _ZoomWheel(sp: sp),
+          ),
         SessionStateOverlay(
           state: sp.state,
           countdownRemaining: sp.countdownRemaining,
@@ -340,6 +346,116 @@ class _BottomBar extends StatelessWidget {
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => VideoPlayerOverlay(shot: shot, preRollSec: settings.preRollSec),
+      ),
+    );
+  }
+}
+
+// ── Zoom drum picker ─────────────────────────────────────────────────────────
+
+class _ZoomWheel extends StatefulWidget {
+  final SessionProvider sp;
+  const _ZoomWheel({required this.sp});
+
+  @override
+  State<_ZoomWheel> createState() => _ZoomWheelState();
+}
+
+class _ZoomWheelState extends State<_ZoomWheel> {
+  final _scrollCtrl = FixedExtentScrollController();
+  List<double> _levels = [1.0];
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initLevels();
+  }
+
+  Future<void> _initLevels() async {
+    final ctrl = widget.sp.cameraController as CameraController?;
+    if (ctrl == null || !ctrl.value.isInitialized) return;
+    final min = await ctrl.getMinZoomLevel();
+    final max = await ctrl.getMaxZoomLevel();
+    if (!mounted) return;
+    setState(() => _levels = _buildLevels(min, max));
+  }
+
+  List<double> _buildLevels(double min, double max) {
+    final step = max <= 4.0 ? 0.5 : 1.0;
+    final result = <double>[];
+    // Start at the first clean step that is >= min (e.g. min=0.6 → start at 1.0)
+    var z = (min / step).ceil() * step;
+    while (z <= max + 0.001) {
+      result.add(double.parse(z.toStringAsFixed(1)));
+      z = double.parse((z + step).toStringAsFixed(1)); // avoid float drift
+    }
+    return result.isEmpty ? [min] : result;
+  }
+
+  String _label(double z) =>
+      z == z.roundToDouble() ? '${z.toInt()}×' : '$z×';
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const itemH = 40.0;
+    const visibleItems = 4;
+
+    return Container(
+      width: 60,
+      height: itemH * visibleItems,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: ShaderMask(
+        shaderCallback: (rect) => const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.white,
+            Colors.white,
+            Colors.transparent,
+          ],
+          stops: [0.0, 0.25, 0.75, 1.0],
+        ).createShader(rect),
+        blendMode: BlendMode.dstIn,
+        child: ListWheelScrollView.useDelegate(
+          controller: _scrollCtrl,
+          itemExtent: itemH,
+          diameterRatio: 1.5,
+          physics: const FixedExtentScrollPhysics(),
+          onSelectedItemChanged: (i) {
+            setState(() => _selectedIndex = i);
+            widget.sp.setZoom(_levels[i]);
+          },
+          childDelegate: ListWheelChildBuilderDelegate(
+            childCount: _levels.length,
+            builder: (_, i) {
+              final sel = i == _selectedIndex;
+              return Center(
+                child: Text(
+                  _label(_levels[i]),
+                  style: TextStyle(
+                    color: sel ? Colors.white : Colors.white38,
+                    fontSize: sel ? 20 : 15,
+                    fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+                    shadows: sel
+                        ? const [Shadow(color: Colors.black54, blurRadius: 6)]
+                        : null,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
