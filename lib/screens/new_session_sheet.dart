@@ -15,12 +15,14 @@ class NewSessionSheet extends StatefulWidget {
 class _NewSessionSheetState extends State<NewSessionSheet> {
   Rifle? _rifle;
   Bullet? _bullet;
+  final _nameCtrl = TextEditingController();
   final _distCtrl = TextEditingController();
   final _weatherCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _distCtrl.dispose();
     _weatherCtrl.dispose();
     _notesCtrl.dispose();
@@ -42,15 +44,27 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
           Container(
             width: 40,
             height: 4,
-            decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: Theme.of(ctx).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           Expanded(
             child: ListView(
               controller: scroll,
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
               children: [
                 Text('Нова сесія', style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 20),
+                TextField(
+                  controller: _nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Назва сесії',
+                    hintText: 'напр. Тренування на 100м',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _DropdownRow<Rifle>(
                   label: 'Гвинтівка',
                   items: ep.rifles,
@@ -110,7 +124,11 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   }
 
   void _submit() {
+    final now = DateTime.now();
+    final autoName =
+        '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
     final session = Session(
+      name: _nameCtrl.text.trim().isEmpty ? autoName : _nameCtrl.text.trim(),
       createdAt: DateTime.now(),
       rifleId: _rifle?.id,
       bulletId: _bullet?.id,

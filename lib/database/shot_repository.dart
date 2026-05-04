@@ -30,6 +30,11 @@ class ShotRepository {
     );
   }
 
+  Future<void> delete(int id) async {
+    final db = await _helper.database;
+    await db.delete('shots', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<void> deleteBySession(int sessionId) async {
     final db = await _helper.database;
     await db.delete('shots', where: 'session_id = ?', whereArgs: [sessionId]);
