@@ -29,6 +29,8 @@ class SessionProvider extends ChangeNotifier {
 
   Timer? _countdownTimer;
   Timer? _timeoutTimer;
+  Timer? _warningTimer;
+  Timer? _warningBeepTimer;
   Timer? _postRollTimer;
   DateTime? _recordingStartTime;
 
@@ -109,6 +111,7 @@ class SessionProvider extends ChangeNotifier {
       _countdownRemaining--;
       if (_countdownRemaining <= 0) {
         t.cancel();
+        _sound.playStartRecording();
         _startRecording().catchError((e) {
           debugPrint('Recording start error: $e');
           _setState(SessionState.ready);
@@ -126,9 +129,13 @@ class SessionProvider extends ChangeNotifier {
 
     try {
       await _video.startRecording();
+      // Wait for the start beep (0.55s) to finish before opening the mic,
+      // otherwise audioplayers and record fight for audio focus.
+      await Future.delayed(const Duration(milliseconds: 650));
       _audio.onShotDetected = _onShotDetected;
       await _audio.start(_settings.detectionDbfs);
       _timeoutTimer = Timer(Duration(seconds: _settings.timeoutSec), _onTimeout);
+      _scheduleWarningBeeps();
     } catch (e) {
       debugPrint('_startRecording failed: $e');
       await _audio.stop().catchError((_) async {});
@@ -137,11 +144,34 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
+  void _scheduleWarningBeeps() {
+    const warningSec = 5;
+    final delay = _settings.timeoutSec - warningSec;
+    if (delay <= 0) return;
+    _warningTimer = Timer(Duration(seconds: delay), () {
+      _warningBeepTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (_state != SessionState.recordingArmed) {
+          t.cancel();
+          return;
+        }
+        _sound.playTimeoutWarning();
+      });
+    });
+  }
+
+  void _cancelWarningBeeps() {
+    _warningTimer?.cancel();
+    _warningTimer = null;
+    _warningBeepTimer?.cancel();
+    _warningBeepTimer = null;
+  }
+
   void _onShotDetected() {
     if (_state != SessionState.recordingArmed) return;
     final offsetMs = DateTime.now().difference(_recordingStartTime!).inMilliseconds;
     final triggerDbfs = _audio.lastDbfs;
     _timeoutTimer?.cancel();
+    _cancelWarningBeeps();
     _setState(SessionState.recordingPost);
     _audio.stop().catchError((e) {
       debugPrint('audio.stop error: $e');
@@ -158,6 +188,7 @@ class SessionProvider extends ChangeNotifier {
 
   Future<void> _onTimeout() async {
     if (_state != SessionState.recordingArmed) return;
+    _cancelWarningBeeps();
     await _audio.stop();
     await _video.stopRecording(delete: true);
     await _sound.playCancel();
@@ -197,6 +228,7 @@ class SessionProvider extends ChangeNotifier {
   Future<void> endSession() async {
     _countdownTimer?.cancel();
     _timeoutTimer?.cancel();
+    _cancelWarningBeeps();
     _postRollTimer?.cancel();
 
     if (_state == SessionState.recordingArmed || _state == SessionState.recordingPost) {
@@ -225,6 +257,7 @@ class SessionProvider extends ChangeNotifier {
   void dispose() {
     _countdownTimer?.cancel();
     _timeoutTimer?.cancel();
+    _cancelWarningBeeps();
     _postRollTimer?.cancel();
     _audio.dispose();
     _video.dispose();

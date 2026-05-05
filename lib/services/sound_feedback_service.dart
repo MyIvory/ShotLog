@@ -6,16 +6,22 @@ class SoundFeedbackService {
   final AudioPlayer _player = AudioPlayer();
 
   late final Uint8List _beepBytes;
+  late final Uint8List _startBeepBytes;
+  late final Uint8List _warningBytes;
   late final Uint8List _readyBytes;
   late final Uint8List _cancelBytes;
 
   SoundFeedbackService() {
-    _beepBytes = _buildWav(880.0, 0.12);
-    _readyBytes = _buildWav(660.0, 0.35);
-    _cancelBytes = _buildWav(220.0, 0.45);
+    _beepBytes      = _buildWav(880.0, 0.12);
+    _startBeepBytes = _buildWav(880.0, 0.55);
+    _warningBytes   = _buildWav(440.0, 0.15);
+    _readyBytes     = _buildWav(660.0, 0.35);
+    _cancelBytes    = _buildWav(220.0, 0.45);
   }
 
   Future<void> playCountdownBeep() => _play(_beepBytes);
+  Future<void> playStartRecording() => _play(_startBeepBytes);
+  Future<void> playTimeoutWarning() => _play(_warningBytes);
   Future<void> playReady() => _play(_readyBytes);
   Future<void> playCancel() => _play(_cancelBytes);
 

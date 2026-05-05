@@ -20,7 +20,7 @@
 | `session.dart` | `Session` | `id`, `name`, `createdAt`, `endedAt`, `shotCount`, `rifleId`, `bulletId`, `distanceM`, `weather`, `notes`, `detectionDbfs` |
 | `shot.dart` | `Shot` | `id`, `sessionId`, `shotNumber`, `detectedAt`, `clipPath`, `shotOffsetMs`, `thumbnailPath`, `triggerDbfs` |
 | `rifle.dart` | `Rifle` | `id`, `name`, `caliber`, `notes` |
-| `bullet.dart` | `Bullet` | `id`, `name`, `weightGr`, `caliber`, `notes` |
+| `bullet.dart` | `Bullet` | `id`, `name`, `weightGr`, `caliber`, `velocityMs`, `notes` |
 
 Всі моделі мають `toMap()`, `fromMap()`, `copyWith()`.
 
@@ -47,6 +47,7 @@
 **Внутрішня логіка:**
 - `_onButtonPressed` → `_startCountdown` → `_startRecording` → `_onShotDetected` → `_finishRecording`
 - `_onTimeout` — скасовує запис без пострілу
+- `_scheduleWarningBeeps()` — короткі звукові сигнали кожну секунду за 5 с до кінця таймауту
 - Дебаунс 2 с між пострілами (`AudioDetectionService`)
 
 ### `EquipmentProvider` (`ChangeNotifier`)
@@ -62,8 +63,9 @@
 | `audio_detection_service.dart` | `AudioDetectionService` | Мікрофон (WAV, 44100 Гц), стрім амплітуди кожні 50 мс, виклик `onShotDetected` при перевищенні порогу |
 | `video_recording_service.dart` | `VideoRecordingService` | `CameraController` (висока якість, без аудіо), запис у `documents/shots/*.mp4` |
 | `bluetooth_button_service.dart` | `BluetoothButtonService` | Підключення BT-брелока, колбек `onButtonPressed` |
-| `sound_feedback_service.dart` | `SoundFeedbackService` | Звукові сигнали: `playCountdownBeep()`, `playReady()`, `playCancel()` |
+| `sound_feedback_service.dart` | `SoundFeedbackService` | Звукові сигнали: `playCountdownBeep()`, `playStartRecording()` (довгий), `playTimeoutWarning()` (короткий низький), `playReady()`, `playCancel()` |
 | `settings_service.dart` | `SettingsService` | `load()` / `save()` налаштувань через `SharedPreferences` |
+| `weather_service.dart` | `WeatherService` | `fetchWeatherString()` — GPS + Open-Meteo API, повертає рядок `'Т: +12°C · Вітер: 3.2 м/с ПнЗх · Вол.: 65% · Тиск: 1013 гПа'` |
 
 **`AudioDetectionService` деталі:**
 - `amplitudeStream` — broadcast Stream<double> (dBFS)
@@ -81,20 +83,20 @@
 
 ## Бази даних (`lib/database/`)
 
-**Хелпер:** `DatabaseHelper` — синглтон, SQLite v3, файл `shotlog.db`
+**Хелпер:** `DatabaseHelper` — синглтон, SQLite v5, файл `shotlog.db`
 
 ### Таблиці
 
 ```sql
 rifles    (id, name, caliber, notes)
-bullets   (id, name, weight_gr, caliber, notes)
+bullets   (id, name, weight_gr, caliber, velocity_ms, notes)
 sessions  (id, name, created_at, ended_at, shot_count, rifle_id, bullet_id,
            distance_m, weather, notes, detection_dbfs)
 shots     (id, session_id, shot_number, detected_at, clip_path,
            shot_offset_ms, thumbnail_path, trigger_dbfs)
 ```
 
-**Міграції:** v1→v2 додає `trigger_dbfs`, `detection_dbfs`; v2→v3 додає `sessions.name`
+**Міграції:** v1→v2: `trigger_dbfs`, `detection_dbfs`; v2→v3: `sessions.name`; v3→v4: виправлення схеми через PRAGMA; v4→v5: `bullets.velocity_ms`
 
 | Репозиторій | Основні методи |
 |---|---|

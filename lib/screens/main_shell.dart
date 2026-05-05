@@ -21,7 +21,6 @@ class _MainShellState extends State<MainShell> {
         children: const [
           HomeScreen(),
           _PlaceholderPage(icon: Icons.photo_library_outlined, label: 'Галерея'),
-          _PlaceholderPage(icon: Icons.bar_chart_outlined, label: 'Статистика'),
           SettingsScreen(),
         ],
       ),
@@ -37,8 +36,6 @@ class _MainShellState extends State<MainShell> {
                 'assets/icons/inactive/ic_session.svg', 'Сесії'),
             _dest('assets/icons/active/ic_gallery.svg',
                 'assets/icons/inactive/ic_gallery.svg', 'Галерея'),
-            _dest('assets/icons/active/ic_stats.svg',
-                'assets/icons/inactive/ic_stats.svg', 'Статист.'),
             _dest('assets/icons/active/ic_settings.svg',
                 'assets/icons/inactive/ic_settings.svg', 'Налашт.'),
           ],
