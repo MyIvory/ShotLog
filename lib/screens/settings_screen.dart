@@ -66,14 +66,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             min: 1,
             max: 10,
             unit: 'с',
+            icon: Icons.timer_outlined,
             onChanged: (v) => _onChange(_s.copyWith(countdownSec: v)),
           ),
           _IntSlider(
             label: 'Таймаут без пострілу',
             value: _s.timeoutSec,
-            min: 5,
-            max: 30,
+            min: 10,
+            max: 60,
             unit: 'с',
+            icon: Icons.timer_outlined,
             onChanged: (v) => _onChange(_s.copyWith(timeoutSec: v)),
           ),
           _IntSlider(
@@ -82,6 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             min: 1,
             max: 10,
             unit: 'с',
+            icon: Icons.timer_outlined,
             helpText: 'Скільки секунд відео записується після пострілу',
             onChanged: (v) => _onChange(_s.copyWith(postRollSec: v)),
           ),
@@ -91,6 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             min: 0,
             max: 5,
             unit: 'с',
+            icon: Icons.timer_outlined,
             helpText: 'З якого моменту розпочинати відтворення при перегляді кліпу',
             onChanged: (v) => _onChange(_s.copyWith(preRollSec: v)),
           ),
@@ -124,6 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(height: 32),
           _Section('Спорядження'),
           ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
             leading: const Icon(Icons.inventory_2_outlined),
             title: const Text('Гвинтівки та набої'),
             trailing: const Icon(Icons.chevron_right),
@@ -196,6 +201,7 @@ class _IntSlider extends StatelessWidget {
   final int max;
   final String unit;
   final String? helpText;
+  final IconData? icon;
   final ValueChanged<int> onChanged;
 
   const _IntSlider({
@@ -205,32 +211,47 @@ class _IntSlider extends StatelessWidget {
     required this.max,
     required this.unit,
     this.helpText,
+    this.icon,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$label: $value $unit', style: Theme.of(context).textTheme.bodyMedium),
-        if (helpText != null)
+        if (icon != null) ...[
           Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              helpText!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
+            padding: const EdgeInsets.only(top: 12, right: 16),
+            child: Icon(icon, color: cs.onSurfaceVariant, size: 24),
           ),
-        Slider(
-          value: value.toDouble(),
-          min: min.toDouble(),
-          max: max.toDouble(),
-          divisions: max - min,
-          label: '$value $unit',
-          onChanged: (v) => onChanged(v.round()),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('$label: $value $unit', style: tt.bodyMedium),
+              if (helpText != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    helpText!,
+                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ),
+              Slider(
+                value: value.toDouble(),
+                min: min.toDouble(),
+                max: max.toDouble(),
+                divisions: max - min,
+                label: '$value $unit',
+                onChanged: (v) => onChanged(v.round()),
+              ),
+            ],
+          ),
         ),
       ],
     );

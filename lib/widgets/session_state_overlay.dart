@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../providers/session_provider.dart';
 
@@ -5,6 +6,7 @@ class SessionStateOverlay extends StatelessWidget {
   final SessionState state;
   final int countdownRemaining;
   final int shotCount;
+  final int timeoutSec;
   final double? lastTriggerDbfs;
 
   const SessionStateOverlay({
@@ -12,6 +14,7 @@ class SessionStateOverlay extends StatelessWidget {
     required this.state,
     required this.countdownRemaining,
     required this.shotCount,
+    required this.timeoutSec,
     this.lastTriggerDbfs,
   });
 
@@ -25,10 +28,99 @@ class SessionStateOverlay extends StatelessWidget {
       right: 12,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(width: _chipWidth, child: _StateChip(state: state, countdown: countdownRemaining)),
-          SizedBox(width: _chipWidth, child: _ShotCounter(count: shotCount)),
+          SizedBox(
+            width: _chipWidth,
+            child: _StateChip(state: state, countdown: countdownRemaining),
+          ),
+          _TimeoutRing(
+            timeoutSec: timeoutSec,
+            active: state == SessionState.recordingArmed,
+          ),
+          SizedBox(
+            width: _chipWidth,
+            child: _ShotCounter(count: shotCount),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Timeout ring ──────────────────────────────────────────────────────────────
+
+class _TimeoutRing extends StatefulWidget {
+  final int timeoutSec;
+  final bool active;
+
+  const _TimeoutRing({required this.timeoutSec, required this.active});
+
+  @override
+  State<_TimeoutRing> createState() => _TimeoutRingState();
+}
+
+class _TimeoutRingState extends State<_TimeoutRing> {
+  Timer? _timer;
+  int _elapsedTenths = 0;
+
+  @override
+  void didUpdateWidget(_TimeoutRing old) {
+    super.didUpdateWidget(old);
+    if (widget.active && !old.active) {
+      _elapsedTenths = 0;
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        if (mounted) setState(() => _elapsedTenths++);
+      });
+    } else if (!widget.active && old.active) {
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.active) return const SizedBox(width: 52, height: 52);
+
+    final totalTenths = widget.timeoutSec * 10;
+    final remainingTenths = (totalTenths - _elapsedTenths).clamp(0, totalTenths);
+    final progress = remainingTenths / totalTenths;
+    final remaining = (remainingTenths / 10).ceil();
+    final isWarning = remaining <= 5;
+    final color = isWarning ? const Color(0xFFFF3B3B) : const Color(0xFFE87722);
+
+    return SizedBox(
+      width: 52,
+      height: 52,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 52,
+            height: 52,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 3.5,
+              color: color,
+              backgroundColor: const Color(0xFF2A2520),
+            ),
+          ),
+          Text(
+            '$remaining',
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              shadows: const [Shadow(color: Colors.black87, blurRadius: 4)],
+            ),
+          ),
         ],
       ),
     );

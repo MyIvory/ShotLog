@@ -17,6 +17,7 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   Rifle? _rifle;
   Bullet? _bullet;
   bool _fetchingWeather = false;
+  bool _nameEmpty = false;
   final _nameCtrl = TextEditingController();
   final _distCtrl = TextEditingController();
   final _weatherCtrl = TextEditingController();
@@ -58,10 +59,12 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: _nameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Назва сесії',
+                  onChanged: (_) { if (_nameEmpty) setState(() => _nameEmpty = false); },
+                  decoration: InputDecoration(
+                    labelText: 'Назва сесії *',
                     hintText: 'напр. Тренування на 100м',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                    errorText: _nameEmpty ? 'Обов\'язкове поле' : null,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -163,11 +166,12 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   }
 
   void _submit() {
-    final now = DateTime.now();
-    final autoName =
-        '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
+    if (_nameCtrl.text.trim().isEmpty) {
+      setState(() => _nameEmpty = true);
+      return;
+    }
     final session = Session(
-      name: _nameCtrl.text.trim().isEmpty ? autoName : _nameCtrl.text.trim(),
+      name: _nameCtrl.text.trim(),
       createdAt: DateTime.now(),
       rifleId: _rifle?.id,
       bulletId: _bullet?.id,
@@ -215,21 +219,32 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
     final nameCtrl = TextEditingController();
     final calCtrl = TextEditingController();
     final weightCtrl = TextEditingController();
+    final velocityCtrl = TextEditingController();
     await showDialog<void>(
       context: ctx,
       builder: (c) => AlertDialog(
         title: const Text('Новий набій'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Назва *')),
-            TextField(controller: calCtrl, decoration: const InputDecoration(labelText: 'Калібр')),
-            TextField(
-              controller: weightCtrl,
-              decoration: const InputDecoration(labelText: 'Вага, gr'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Назва *')),
+              const SizedBox(height: 8),
+              TextField(controller: calCtrl, decoration: const InputDecoration(labelText: 'Калібр')),
+              const SizedBox(height: 8),
+              TextField(
+                controller: weightCtrl,
+                decoration: const InputDecoration(labelText: 'Вага, gr'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: velocityCtrl,
+                decoration: const InputDecoration(labelText: 'Швидкість, м/с'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c), child: const Text('Скасувати')),
@@ -240,6 +255,7 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
                 name: nameCtrl.text.trim(),
                 caliber: calCtrl.text.trim().isEmpty ? null : calCtrl.text.trim(),
                 weightGr: double.tryParse(weightCtrl.text.trim()),
+                velocityMs: double.tryParse(velocityCtrl.text.trim()),
               ));
               if (mounted) setState(() => _bullet = bullet);
               if (c.mounted) Navigator.pop(c);

@@ -13,7 +13,7 @@ class SettingsService {
     final p = await SharedPreferences.getInstance();
     return AppSettings(
       countdownSec: p.getInt(_countdown) ?? 3,
-      timeoutSec: p.getInt(_timeout) ?? 10,
+      timeoutSec: (p.getInt(_timeout) ?? 10).clamp(10, 60),
       postRollSec: p.getInt(_postRoll) ?? 3,
       preRollSec: p.getInt(_preRoll) ?? 2,
       detectionDbfs: p.getDouble(_detectionDb) ?? -40.0,

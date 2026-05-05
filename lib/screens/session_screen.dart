@@ -41,7 +41,7 @@ class SessionScreen extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              Expanded(child: _CameraView(sp: sp)),
+              Expanded(child: _CameraView(sp: sp, timeoutSec: settings.timeoutSec)),
               _AmplitudePanel(sp: sp),
               _BottomBar(sp: sp, settings: settings),
             ],
@@ -56,7 +56,8 @@ class SessionScreen extends StatelessWidget {
 
 class _CameraView extends StatefulWidget {
   final SessionProvider sp;
-  const _CameraView({required this.sp});
+  final int timeoutSec;
+  const _CameraView({required this.sp, required this.timeoutSec});
 
   @override
   State<_CameraView> createState() => _CameraViewState();
@@ -112,6 +113,7 @@ class _CameraViewState extends State<_CameraView> {
           state: sp.state,
           countdownRemaining: sp.countdownRemaining,
           shotCount: sp.shots.length,
+          timeoutSec: widget.timeoutSec,
           lastTriggerDbfs: sp.shots.lastOrNull?.triggerDbfs,
         ),
         // Countdown full-screen overlay

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../models/rifle.dart';
 import '../models/bullet.dart';
@@ -35,9 +36,27 @@ class _EquipmentScreenState extends State<EquipmentScreen>
         title: const Text('Спорядження'),
         bottom: TabBar(
           controller: _tabCtrl,
-          tabs: const [
-            Tab(icon: Icon(Icons.precision_manufacturing_outlined), text: 'Гвинтівки'),
-            Tab(icon: Icon(Icons.circle_outlined), text: 'Набої'),
+          tabs: [
+            Tab(
+              icon: SvgPicture.asset(
+                _tabCtrl.index == 0
+                    ? 'assets/icons/active/ic_rifle_active.svg'
+                    : 'assets/icons/inactive/ic_rifle_inactive.svg',
+                width: 24,
+                height: 24,
+              ),
+              text: 'Гвинтівки',
+            ),
+            Tab(
+              icon: SvgPicture.asset(
+                _tabCtrl.index == 1
+                    ? 'assets/icons/active/ic_bullet_active.svg'
+                    : 'assets/icons/inactive/ic_bullet_inactive.svg',
+                width: 24,
+                height: 24,
+              ),
+              text: 'Набої',
+            ),
           ],
         ),
       ),
@@ -72,15 +91,17 @@ Future<void> _showRifleDialog(BuildContext context, [Rifle? existing]) async {
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(existing == null ? 'Нова гвинтівка' : 'Редагувати гвинтівку'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Назва *')),
-          const SizedBox(height: 8),
-          TextField(controller: calCtrl, decoration: const InputDecoration(labelText: 'Калібр')),
-          const SizedBox(height: 8),
-          TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Нотатки')),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Назва *')),
+            const SizedBox(height: 8),
+            TextField(controller: calCtrl, decoration: const InputDecoration(labelText: 'Калібр')),
+            const SizedBox(height: 8),
+            TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Нотатки')),
+          ],
+        ),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Скасувати')),
@@ -112,6 +133,8 @@ Future<void> _showBulletDialog(BuildContext context, [Bullet? existing]) async {
   final calCtrl = TextEditingController(text: existing?.caliber);
   final weightCtrl = TextEditingController(
       text: existing?.weightGr != null ? existing!.weightGr!.toStringAsFixed(1) : '');
+  final velocityCtrl = TextEditingController(
+      text: existing?.velocityMs != null ? existing!.velocityMs!.toStringAsFixed(0) : '');
   final notesCtrl = TextEditingController(text: existing?.notes);
   final ep = context.read<EquipmentProvider>();
 
@@ -119,21 +142,29 @@ Future<void> _showBulletDialog(BuildContext context, [Bullet? existing]) async {
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(existing == null ? 'Новий набій' : 'Редагувати набій'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Назва *')),
-          const SizedBox(height: 8),
-          TextField(controller: calCtrl, decoration: const InputDecoration(labelText: 'Калібр')),
-          const SizedBox(height: 8),
-          TextField(
-            controller: weightCtrl,
-            decoration: const InputDecoration(labelText: 'Вага, gr'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 8),
-          TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Нотатки')),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Назва *')),
+            const SizedBox(height: 8),
+            TextField(controller: calCtrl, decoration: const InputDecoration(labelText: 'Калібр')),
+            const SizedBox(height: 8),
+            TextField(
+              controller: weightCtrl,
+              decoration: const InputDecoration(labelText: 'Вага, gr'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: velocityCtrl,
+              decoration: const InputDecoration(labelText: 'Швидкість, м/с'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 8),
+            TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Нотатки')),
+          ],
+        ),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Скасувати')),
@@ -145,6 +176,7 @@ Future<void> _showBulletDialog(BuildContext context, [Bullet? existing]) async {
               name: nameCtrl.text.trim(),
               caliber: calCtrl.text.trim().isEmpty ? null : calCtrl.text.trim(),
               weightGr: double.tryParse(weightCtrl.text.trim()),
+              velocityMs: double.tryParse(velocityCtrl.text.trim()),
               notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
             );
             if (existing == null) {
@@ -170,15 +202,20 @@ class _RifleTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final ep = context.watch<EquipmentProvider>();
     if (ep.rifles.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.precision_manufacturing_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Немає гвинтівок', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Натисніть + щоб додати першу', style: TextStyle(color: Colors.grey)),
+            SvgPicture.asset(
+              'assets/icons/inactive/ic_rifle_inactive.svg',
+              width: 64,
+              height: 64,
+              colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+            ),
+            const SizedBox(height: 16),
+            const Text('Немає гвинтівок', style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            const Text('Натисніть + щоб додати першу', style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -197,7 +234,11 @@ class _RifleItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const Icon(Icons.precision_manufacturing_outlined),
+      leading: SvgPicture.asset(
+        'assets/icons/active/ic_rifle_active.svg',
+        width: 24,
+        height: 24,
+      ),
       title: Text(rifle.name),
       subtitle: _rifleSubtitle(rifle) != null ? Text(_rifleSubtitle(rifle)!) : null,
       trailing: Row(
@@ -255,15 +296,20 @@ class _BulletTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final ep = context.watch<EquipmentProvider>();
     if (ep.bullets.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.circle_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Немає набоїв', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Натисніть + щоб додати перший', style: TextStyle(color: Colors.grey)),
+            SvgPicture.asset(
+              'assets/icons/inactive/ic_bullet_inactive.svg',
+              width: 64,
+              height: 64,
+              colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+            ),
+            const SizedBox(height: 16),
+            const Text('Немає набоїв', style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            const Text('Натисніть + щоб додати перший', style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -282,7 +328,11 @@ class _BulletItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const Icon(Icons.circle_outlined),
+      leading: SvgPicture.asset(
+        'assets/icons/active/ic_bullet_active.svg',
+        width: 24,
+        height: 24,
+      ),
       title: Text(bullet.name),
       subtitle: bullet.displayName != bullet.name ? Text(bullet.displayName) : null,
       trailing: Row(
