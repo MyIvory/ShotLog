@@ -71,7 +71,7 @@ class ShotLogApp extends StatelessWidget {
         color: WidgetStateProperty.all(border),
         labelStyle: const TextStyle(color: chipText, fontSize: 12),
         side: const BorderSide(color: Color(0xFF4A3528)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(horizontal: 4),
       ),
       appBarTheme: const AppBarTheme(
@@ -81,6 +81,29 @@ class ShotLogApp extends StatelessWidget {
         titleTextStyle: TextStyle(
           color: textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
         iconTheme: IconThemeData(color: textSecondary),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       dividerTheme: const DividerThemeData(color: border, space: 1),
       navigationBarTheme: NavigationBarThemeData(

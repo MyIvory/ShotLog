@@ -349,7 +349,7 @@ class _SpeedChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         decoration: BoxDecoration(
           color: active ? const Color(0xFFE87722) : const Color(0xFF261E1A),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(10),
           border: active ? null : Border.all(color: const Color(0xFF33281F)),
         ),
         child: Text(

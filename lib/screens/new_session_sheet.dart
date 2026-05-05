@@ -253,6 +253,10 @@ class _DropdownRow<T> extends StatelessWidget {
           icon: const Icon(Icons.add),
           tooltip: 'Додати',
           onPressed: onAdd,
+          style: IconButton.styleFrom(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
         ),
       ],
     );

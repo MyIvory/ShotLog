@@ -123,7 +123,16 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
     if (_session == null) return;
     final settings = await SettingsService().load();
     if (!mounted) return;
-    await context.read<SessionProvider>().continueSession(_session!, settings);
+    try {
+      await context.read<SessionProvider>().continueSession(_session!, settings);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка запуску сесії: $e')),
+        );
+      }
+      return;
+    }
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => SessionScreen(settings: settings)),
@@ -320,7 +329,7 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: BoxDecoration(
         color: const Color(0xFF261E1A),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF33281F)),
       ),
       child: Column(
@@ -355,7 +364,7 @@ class _WarmChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: const Color(0xFF33281F),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF4A3528)),
       ),
       child: Text(

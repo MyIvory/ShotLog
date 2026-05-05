@@ -251,7 +251,7 @@ class _InfoBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF201810),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF3A2E1A)),
       ),
       child: Row(
@@ -701,7 +701,7 @@ class _PermBox extends StatelessWidget {
       width: 72, height: 70,
       decoration: BoxDecoration(
         color: const Color(0xFF201810),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: borderColor, width: 1.2),
       ),
       child: Column(
@@ -733,7 +733,7 @@ class _PermBoxDisabled extends StatelessWidget {
           width: 72, height: 70,
           decoration: BoxDecoration(
             color: const Color(0xFF201810),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFF3A2E1A), width: 1.2),
           ),
           child: Column(
@@ -756,7 +756,7 @@ class _PermBoxDisabled extends StatelessWidget {
         // Cross overlay
         Positioned.fill(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             child: CustomPaint(painter: _CrossPainter()),
           ),
         ),

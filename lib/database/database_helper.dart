@@ -15,7 +15,7 @@ class DatabaseHelper {
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'shotlog.db');
-    return openDatabase(path, version: 3, onCreate: _onCreate, onUpgrade: _onUpgrade);
+    return openDatabase(path, version: 4, onCreate: _onCreate, onUpgrade: _onUpgrade);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -25,6 +25,25 @@ class DatabaseHelper {
     }
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE sessions ADD COLUMN name TEXT');
+    }
+    if (oldVersion < 4) {
+      // Fix: _onCreate at v3 missed name, detection_dbfs, trigger_dbfs columns.
+      // Add each only if missing (PRAGMA table_info is the safe way in SQLite).
+      final sessionCols = (await db.rawQuery('PRAGMA table_info(sessions)'))
+          .map((r) => r['name'] as String)
+          .toSet();
+      if (!sessionCols.contains('name')) {
+        await db.execute('ALTER TABLE sessions ADD COLUMN name TEXT');
+      }
+      if (!sessionCols.contains('detection_dbfs')) {
+        await db.execute('ALTER TABLE sessions ADD COLUMN detection_dbfs REAL');
+      }
+      final shotCols = (await db.rawQuery('PRAGMA table_info(shots)'))
+          .map((r) => r['name'] as String)
+          .toSet();
+      if (!shotCols.contains('trigger_dbfs')) {
+        await db.execute('ALTER TABLE shots ADD COLUMN trigger_dbfs REAL');
+      }
     }
   }
 
@@ -49,6 +68,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
         created_at TEXT NOT NULL,
         ended_at TEXT,
         shot_count INTEGER DEFAULT 0,
@@ -56,7 +76,8 @@ class DatabaseHelper {
         bullet_id INTEGER REFERENCES bullets(id),
         distance_m REAL,
         weather TEXT,
-        notes TEXT
+        notes TEXT,
+        detection_dbfs REAL
       )
     ''');
     await db.execute('''
@@ -67,7 +88,8 @@ class DatabaseHelper {
         detected_at TEXT NOT NULL,
         clip_path TEXT NOT NULL,
         shot_offset_ms INTEGER NOT NULL,
-        thumbnail_path TEXT
+        thumbnail_path TEXT,
+        trigger_dbfs REAL
       )
     ''');
   }
