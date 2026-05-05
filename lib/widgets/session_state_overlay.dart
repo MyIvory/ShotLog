@@ -94,7 +94,7 @@ class _StateChipState extends State<_StateChip>
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color: cfg.bg,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: cfg.border, width: 1),
         ),
         child: Row(
@@ -201,7 +201,7 @@ class _ShotCounter extends StatelessWidget {
         constraints: const BoxConstraints(minWidth: 56),
         decoration: BoxDecoration(
           color: const Color(0x99000000),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFE87722), width: 1),
         ),
         child: Text(

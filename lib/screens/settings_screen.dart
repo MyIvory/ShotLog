@@ -165,6 +165,11 @@ class _TriggerModeTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: SegmentedButton<TriggerMode>(
+        style: SegmentedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
         segments: const [
           ButtonSegment(
             value: TriggerMode.button,

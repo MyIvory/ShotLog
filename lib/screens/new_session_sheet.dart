@@ -4,6 +4,7 @@ import '../models/session.dart';
 import '../models/rifle.dart';
 import '../models/bullet.dart';
 import '../providers/equipment_provider.dart';
+import '../services/weather_service.dart';
 
 class NewSessionSheet extends StatefulWidget {
   const NewSessionSheet({super.key});
@@ -15,6 +16,7 @@ class NewSessionSheet extends StatefulWidget {
 class _NewSessionSheetState extends State<NewSessionSheet> {
   Rifle? _rifle;
   Bullet? _bullet;
+  bool _fetchingWeather = false;
   final _nameCtrl = TextEditingController();
   final _distCtrl = TextEditingController();
   final _weatherCtrl = TextEditingController();
@@ -32,27 +34,25 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   @override
   Widget build(BuildContext context) {
     final ep = context.watch<EquipmentProvider>();
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (ctx, scroll) => Column(
-        children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(ctx).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 8),
+        Container(
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(2),
           ),
-          Expanded(
-            child: ListView(
-              controller: scroll,
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
+        ),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomInset),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text('Нова сесія', style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 20),
@@ -83,6 +83,38 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
                   onAdd: () => _addBulletDialog(context, ep),
                 ),
                 const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _weatherCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Погода / умови',
+                          hintText: 'напр. вітер 3 м/с, +12°C',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      icon: _fetchingWeather
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.cloud_download_outlined),
+                      tooltip: 'Завантажити погоду',
+                      onPressed: _fetchingWeather ? null : _fetchWeather,
+                      style: IconButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _distCtrl,
                   decoration: const InputDecoration(
@@ -90,15 +122,6 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _weatherCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Погода / умови',
-                    hintText: 'напр. вітер 3 м/с, +12°C',
-                    border: OutlineInputBorder(),
-                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -118,9 +141,25 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Future<void> _fetchWeather() async {
+    setState(() => _fetchingWeather = true);
+    try {
+      final weather = await WeatherService().fetchWeatherString();
+      if (mounted) setState(() => _weatherCtrl.text = weather);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Не вдалося отримати погоду: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _fetchingWeather = false);
+    }
   }
 
   void _submit() {
@@ -253,6 +292,10 @@ class _DropdownRow<T> extends StatelessWidget {
           icon: const Icon(Icons.add),
           tooltip: 'Додати',
           onPressed: onAdd,
+          style: IconButton.styleFrom(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
         ),
       ],
     );

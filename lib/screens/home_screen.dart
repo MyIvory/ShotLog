@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../database/session_repository.dart';
-import '../database/rifle_repository.dart';
-import '../database/bullet_repository.dart';
 import '../models/session.dart';
-import '../models/rifle.dart';
-import '../models/bullet.dart';
 import '../providers/equipment_provider.dart';
 import '../providers/session_provider.dart';
 import '../services/settings_service.dart';
@@ -23,11 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _repo = SessionRepository();
-  final _rifleRepo = RifleRepository();
-  final _bulletRepo = BulletRepository();
   List<Session> _sessions = [];
-  Map<int, Rifle> _rifles = {};
-  Map<int, Bullet> _bullets = {};
   bool _loading = true;
 
   @override
@@ -38,14 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _load() async {
     final sessions = await _repo.getAll();
-    final rifles = await _rifleRepo.getAll();
-    final bullets = await _bulletRepo.getAll();
-
     if (mounted) {
       setState(() {
         _sessions = sessions;
-        _rifles = {for (final r in rifles) r.id!: r};
-        _bullets = {for (final b in bullets) b.id!: b};
         _loading = false;
       });
     }
@@ -119,12 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemCount: _sessions.length,
                     itemBuilder: (ctx, i) => _SessionCard(
                       session: _sessions[i],
-                      rifle: _sessions[i].rifleId != null
-                          ? _rifles[_sessions[i].rifleId!]
-                          : null,
-                      bullet: _sessions[i].bulletId != null
-                          ? _bullets[_sessions[i].bulletId!]
-                          : null,
                       onTap: () async {
                         await Navigator.push<bool>(
                           context,
@@ -173,7 +154,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final settings = await SettingsService().load();
     if (!mounted) return;
 
-    await context.read<SessionProvider>().startSession(session, settings);
+    try {
+      await context.read<SessionProvider>().startSession(session, settings);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка запуску сесії: $e')),
+        );
+      }
+      return;
+    }
     if (!mounted) return;
 
     await Navigator.push(
@@ -189,14 +179,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _SessionCard extends StatelessWidget {
   final Session session;
-  final Rifle? rifle;
-  final Bullet? bullet;
   final VoidCallback onTap;
 
   const _SessionCard({
     required this.session,
-    this.rifle,
-    this.bullet,
     required this.onTap,
   });
 
@@ -210,9 +196,6 @@ class _SessionCard extends StatelessWidget {
     final m = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} ${_monthsShort[dt.month]} ${dt.year} · $h:$m';
   }
-
-  bool get _hasChips =>
-      rifle != null || bullet != null || session.distanceM != null;
 
   @override
   Widget build(BuildContext context) {
@@ -230,54 +213,34 @@ class _SessionCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFF33281F)),
             ),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            session.name ?? 'Сесія',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFFF0EAE5),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _formatCardDate(session.createdAt),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF7A6E68),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _Badge(count: session.shotCount),
-                  ],
-                ),
-                if (_hasChips) ...[
-                  const SizedBox(height: 5),
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (rifle != null) _WarmChip(label: rifle!.name),
-                      if (bullet != null) _WarmChip(label: bullet!.name),
-                      if (session.distanceM != null)
-                        _WarmChip(
-                            label:
-                                '${session.distanceM!.toStringAsFixed(0)}м'),
+                      Text(
+                        session.name ?? 'Сесія',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFFF0EAE5),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatCardDate(session.createdAt),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF7A6E68),
+                        ),
+                      ),
                     ],
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+                _Badge(count: session.shotCount),
               ],
             ),
           ),
@@ -311,23 +274,3 @@ class _Badge extends StatelessWidget {
   }
 }
 
-class _WarmChip extends StatelessWidget {
-  final String label;
-  const _WarmChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFF33281F),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF4A3528)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(color: Color(0xFFC89A6A), fontSize: 9),
-      ),
-    );
-  }
-}

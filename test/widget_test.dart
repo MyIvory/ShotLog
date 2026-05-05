@@ -5,5 +5,6 @@ void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const ShotLogApp());
     expect(find.text('ShotLog'), findsOneWidget);
+
   });
 }

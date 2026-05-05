@@ -123,7 +123,16 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
     if (_session == null) return;
     final settings = await SettingsService().load();
     if (!mounted) return;
-    await context.read<SessionProvider>().continueSession(_session!, settings);
+    try {
+      await context.read<SessionProvider>().continueSession(_session!, settings);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка запуску сесії: $e')),
+        );
+      }
+      return;
+    }
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => SessionScreen(settings: settings)),
@@ -245,16 +254,15 @@ class _MetaSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
           child: Wrap(
-            spacing: 4,
-            runSpacing: 4,
+            spacing: 6,
+            runSpacing: 6,
             children: [
               if (rifle != null) _WarmChip(label: rifle!.displayName),
               if (bullet != null) _WarmChip(label: bullet!.displayName),
               if (session!.distanceM != null)
-                _WarmChip(
-                    label:
-                        '${session!.distanceM!.toStringAsFixed(0)}м'),
+                _WarmChip(label: '${session!.distanceM!.toStringAsFixed(0)} м'),
               _WarmChip(label: _formatDateShort(session!.createdAt)),
+              ..._weatherChips(session!.weather),
             ],
           ),
         ),
@@ -295,6 +303,14 @@ class _MetaSection extends StatelessWidget {
     );
   }
 
+  List<Widget> _weatherChips(String? weather) {
+    if (weather == null || weather.isEmpty) return [];
+    return weather
+        .split(' · ')
+        .map((part) => _WarmChip(label: part.trim()))
+        .toList();
+  }
+
   String _formatDuration(Duration d) {
     final h = d.inHours;
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -320,7 +336,7 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: BoxDecoration(
         color: const Color(0xFF261E1A),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF33281F)),
       ),
       child: Column(
@@ -352,15 +368,15 @@ class _WarmChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: const Color(0xFF33281F),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF4A3528)),
       ),
       child: Text(
         label,
-        style: const TextStyle(color: Color(0xFFC89A6A), fontSize: 9),
+        style: const TextStyle(color: Color(0xFFC89A6A), fontSize: 11),
       ),
     );
   }
