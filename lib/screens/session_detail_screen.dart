@@ -254,16 +254,15 @@ class _MetaSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
           child: Wrap(
-            spacing: 4,
-            runSpacing: 4,
+            spacing: 6,
+            runSpacing: 6,
             children: [
               if (rifle != null) _WarmChip(label: rifle!.displayName),
               if (bullet != null) _WarmChip(label: bullet!.displayName),
               if (session!.distanceM != null)
-                _WarmChip(
-                    label:
-                        '${session!.distanceM!.toStringAsFixed(0)}м'),
+                _WarmChip(label: '${session!.distanceM!.toStringAsFixed(0)} м'),
               _WarmChip(label: _formatDateShort(session!.createdAt)),
+              ..._weatherChips(session!.weather),
             ],
           ),
         ),
@@ -302,6 +301,14 @@ class _MetaSection extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  List<Widget> _weatherChips(String? weather) {
+    if (weather == null || weather.isEmpty) return [];
+    return weather
+        .split(' · ')
+        .map((part) => _WarmChip(label: part.trim()))
+        .toList();
   }
 
   String _formatDuration(Duration d) {
@@ -361,7 +368,7 @@ class _WarmChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: const Color(0xFF33281F),
         borderRadius: BorderRadius.circular(10),
@@ -369,7 +376,7 @@ class _WarmChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(color: Color(0xFFC89A6A), fontSize: 9),
+        style: const TextStyle(color: Color(0xFFC89A6A), fontSize: 11),
       ),
     );
   }
