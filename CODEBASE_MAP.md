@@ -15,7 +15,7 @@
 
 | Файл | Клас | Ключові поля |
 |---|---|---|
-| `app_settings.dart` | `AppSettings` (immutable) | `countdownSec`, `timeoutSec`, `postRollSec`, `preRollSec`, `detectionDbfs` (-20.0), `triggerMode` |
+| `app_settings.dart` | `AppSettings` (immutable) | `countdownSec`, `timeoutSec`, `postRollSec`, `preRollSec`, `detectionDbfs` (-20.0), `triggerMode`, `selectedCameraId` (""), `cameraZoomMin` (0.0), `cameraZoomMax` (0.0) |
 | `app_settings.dart` | `TriggerMode` (enum) | `button`, `bluetooth` |
 | `session.dart` | `Session` | `id`, `name`, `createdAt`, `endedAt`, `shotCount`, `rifleId`, `bulletId`, `distanceM`, `weather`, `notes`, `detectionDbfs` |
 | `shot.dart` | `Shot` | `id`, `sessionId`, `shotNumber`, `detectedAt`, `clipPath`, `shotOffsetMs`, `thumbnailPath`, `triggerDbfs` |
@@ -65,6 +65,7 @@
 | `bluetooth_button_service.dart` | `BluetoothButtonService` | Підключення BT-брелока, колбек `onButtonPressed` |
 | `sound_feedback_service.dart` | `SoundFeedbackService` | Звукові сигнали: `playCountdownBeep()`, `playStartRecording()` (довгий), `playTimeoutWarning()` (короткий низький), `playReady()`, `playCancel()` |
 | `settings_service.dart` | `SettingsService` | `load()` / `save()` налаштувань через `SharedPreferences` |
+| `physical_camera_service.dart` | `PhysicalCameraService` | `getBackCameras()` — перераховує фізичні камери через method channel `shotlog/physical_camera`; повертає `PhysicalCameraInfo` із оціночним зум-діапазоном на основі фокусних відстаней |
 | `weather_service.dart` | `WeatherService` | `fetchWeatherString()` — GPS + Open-Meteo API, повертає рядок `'Т: +12°C · Вітер: 3.2 м/с ПнЗх · Вол.: 65% · Тиск: 1013 гПа'` |
 
 **`AudioDetectionService` деталі:**
@@ -75,6 +76,7 @@
 - Тимчасовий WAV-файл видаляється при `stop()`
 
 **`VideoRecordingService` деталі:**
+- `initialize({cameraId})` — відкриває камеру за Android Camera2 ID (строка); якщо ID не в `availableCameras()`, пробує відкрити фізичну камеру напряму; при помилці — fallback на першу задню логічну
 - Зберігає кліпи: `getApplicationDocumentsDirectory()/shots/<timestamp>.mp4`
 - `stopRecording({delete: true})` — видаляє файл (таймаут/скасування)
 - `setZoom(zoom)` — передає `setZoomLevel` у `CameraController`
@@ -117,7 +119,7 @@ shots     (id, session_id, shot_number, detected_at, clip_path,
 | `new_session_sheet.dart` | `NewSessionSheet` | Bottom sheet вибору гвинтівки/набою/дистанції |
 | `session_screen.dart` | `SessionScreen` | Активна сесія: камера + оверлей стану + амплітуда |
 | `session_detail_screen.dart` | `SessionDetailScreen` | Перегляд пострілів сесії |
-| `settings_screen.dart` | `SettingsScreen` | Таймінги, тригер, поріг, спорядження |
+| `settings_screen.dart` | `SettingsScreen` | Таймінги, тригер, поріг, камера (вибір об'єктива), спорядження |
 | `equipment_screen.dart` | `EquipmentScreen` | CRUD гвинтівок та набоїв |
 | `onboarding_screen.dart` | `OnboardingScreen` | Перший запуск |
 

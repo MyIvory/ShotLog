@@ -15,6 +15,10 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PhysicalCameraChannel.CHANNEL)
+            .setMethodCallHandler(PhysicalCameraChannel(applicationContext))
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, VideoTrimChannel.CHANNEL)
+            .setMethodCallHandler(VideoTrimChannel())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

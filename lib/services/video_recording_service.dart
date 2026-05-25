@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 class VideoRecordingService {
@@ -8,18 +9,70 @@ class VideoRecordingService {
   CameraController? get controller => _controller;
   bool get isInitialized => _controller?.value.isInitialized ?? false;
 
-  Future<void> initialize() async {
+  Future<void> initialize({String cameraId = ''}) async {
     await dispose();
     final cameras = await availableCameras();
     if (cameras.isEmpty) throw Exception('No cameras available');
 
+    CameraDescription cam;
+    if (cameraId.isNotEmpty) {
+      final found = cameras.where((c) => c.name == cameraId).firstOrNull;
+      if (found != null) {
+        cam = found;
+      } else {
+        // Physical camera ID not in availableCameras — try to open directly.
+        // Sensor orientation defaults to 90 (standard for back cameras on Android).
+        cam = CameraDescription(
+          name: cameraId,
+          lensDirection: CameraLensDirection.back,
+          sensorOrientation: 90,
+        );
+      }
+    } else {
+      cam = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+    }
+
     _controller = CameraController(
-      cameras.first,
+      cam,
       ResolutionPreset.high,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
-    await _controller!.initialize();
+    try {
+      await _controller!.initialize();
+      debugPrint('[VideoRecordingService] opened camera "${cam.name}" successfully');
+    } catch (e) {
+      // Direct physical camera opening failed — fall back to first back camera.
+      debugPrint('[VideoRecordingService] failed to open camera "${cam.name}": $e — falling back');
+      await _controller?.dispose();
+      final fallback = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+      debugPrint('[VideoRecordingService] fallback to camera "${fallback.name}"');
+      _controller = CameraController(
+        fallback,
+        ResolutionPreset.high,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+      await _controller!.initialize();
+    }
+    await _lockFocus();
+  }
+
+  // Lock AF to prevent the camera HAL from switching physical lenses
+  // during auto-focus attempts (relevant when near zoom boundaries).
+  Future<void> _lockFocus() async {
+    try {
+      await _controller!.setFocusMode(FocusMode.locked);
+      debugPrint('[VideoRecordingService] focus locked');
+    } catch (e) {
+      debugPrint('[VideoRecordingService] could not lock focus: $e');
+    }
   }
 
   Future<void> startRecording() async {
