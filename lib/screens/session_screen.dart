@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/app_settings.dart';
 import '../providers/session_provider.dart';
+import '../services/physical_camera_service.dart';
 import '../widgets/session_state_overlay.dart';
 import '../widgets/video_player_overlay.dart';
 
@@ -41,7 +42,7 @@ class SessionScreen extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              Expanded(child: _CameraView(sp: sp, timeoutSec: settings.timeoutSec)),
+              Expanded(child: _CameraView(sp: sp, settings: settings)),
               _AmplitudePanel(sp: sp),
               _BottomBar(sp: sp, settings: settings),
             ],
@@ -56,8 +57,8 @@ class SessionScreen extends StatelessWidget {
 
 class _CameraView extends StatefulWidget {
   final SessionProvider sp;
-  final int timeoutSec;
-  const _CameraView({required this.sp, required this.timeoutSec});
+  final AppSettings settings;
+  const _CameraView({required this.sp, required this.settings});
 
   @override
   State<_CameraView> createState() => _CameraViewState();
@@ -86,6 +87,18 @@ class _CameraViewState extends State<_CameraView> {
     });
   }
 
+  void _showCameraPicker(BuildContext context, SessionProvider sp) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _SessionCameraSheet(sp: sp),
+    );
+  }
+
   @override
   void dispose() {
     _flashTimer?.cancel();
@@ -107,13 +120,33 @@ class _CameraViewState extends State<_CameraView> {
           Positioned(
             right: 12,
             bottom: 16,
-            child: _ZoomWheel(sp: sp),
+            child: _ZoomWheel(
+              key: ValueKey(sp.cameraController.hashCode),
+              sp: sp,
+            ),
+          ),
+        if (sp.state == SessionState.ready && sp.hasCameraPreview)
+          Positioned(
+            bottom: 16,
+            left: 12,
+            child: GestureDetector(
+              onTap: () => _showCameraPicker(context, sp),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.camera_alt_outlined,
+                    color: Colors.white70, size: 22),
+              ),
+            ),
           ),
         SessionStateOverlay(
           state: sp.state,
           countdownRemaining: sp.countdownRemaining,
           shotCount: sp.shots.length,
-          timeoutSec: widget.timeoutSec,
+          timeoutSec: widget.settings.timeoutSec,
           lastTriggerDbfs: sp.shots.lastOrNull?.triggerDbfs,
         ),
         // Countdown full-screen overlay
@@ -385,7 +418,7 @@ class _BottomBar extends StatelessWidget {
 
 class _ZoomWheel extends StatefulWidget {
   final SessionProvider sp;
-  const _ZoomWheel({required this.sp});
+  const _ZoomWheel({super.key, required this.sp});
 
   @override
   State<_ZoomWheel> createState() => _ZoomWheelState();
@@ -405,10 +438,17 @@ class _ZoomWheelState extends State<_ZoomWheel> {
   Future<void> _initLevels() async {
     final ctrl = widget.sp.cameraController as CameraController?;
     if (ctrl == null || !ctrl.value.isInitialized) return;
-    final min = await ctrl.getMinZoomLevel();
-    final max = await ctrl.getMaxZoomLevel();
+    final ctrlMin = await ctrl.getMinZoomLevel();
+    final ctrlMax = await ctrl.getMaxZoomLevel();
+    final minOverride = widget.sp.cameraZoomMin > 0 ? widget.sp.cameraZoomMin : null;
+    final maxOverride = widget.sp.cameraZoomMax > 0 ? widget.sp.cameraZoomMax : null;
+    final min = (minOverride ?? ctrlMin).clamp(ctrlMin, ctrlMax);
+    final max = (maxOverride ?? ctrlMax).clamp(ctrlMin, ctrlMax);
     if (!mounted) return;
-    setState(() => _levels = _buildLevels(min, max));
+    final levels = _buildLevels(min, max);
+    setState(() => _levels = levels);
+    // Apply initial zoom so the camera uses the correct physical lens from the start.
+    if (levels.isNotEmpty) widget.sp.setZoom(levels.first);
   }
 
   List<double> _buildLevels(double min, double max) {
@@ -485,6 +525,113 @@ class _ZoomWheelState extends State<_ZoomWheel> {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Session-screen camera picker (no slider) ─────────────────────────────────
+
+class _SessionCameraSheet extends StatefulWidget {
+  final SessionProvider sp;
+  const _SessionCameraSheet({required this.sp});
+
+  @override
+  State<_SessionCameraSheet> createState() => _SessionCameraSheetState();
+}
+
+class _SessionCameraSheetState extends State<_SessionCameraSheet> {
+  List<PhysicalCameraInfo>? _cameras;
+
+  @override
+  void initState() {
+    super.initState();
+    PhysicalCameraService().getBackCameras().then((list) {
+      if (mounted) setState(() => _cameras = list);
+    });
+  }
+
+  String _rangeLabel(PhysicalCameraInfo c) {
+    if (c.zoomMin == null || c.zoomMax == null) return '';
+    final lo = c.zoomMin!;
+    final hi = c.zoomMax!;
+    String fmt(double v) =>
+        v == v.roundToDouble() ? '${v.toInt()}×' : '${v.toStringAsFixed(1)}×';
+    return '${fmt(lo)} – ${fmt(hi)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Вибір камери',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Діапазон зуму підлаштується автоматично',
+              style: TextStyle(color: Color(0xFF888888), fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            if (_cameras == null)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else
+              ..._cameras!.map((cam) {
+                final isSelected =
+                    widget.sp.settings.selectedCameraId == cam.id;
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  leading: Icon(
+                    Icons.camera_alt_outlined,
+                    color: isSelected
+                        ? const Color(0xFFE87722)
+                        : const Color(0xFF888888),
+                  ),
+                  title: Text(
+                    cam.focalLength > 0
+                        ? '${cam.focalLength.toStringAsFixed(1)} mm'
+                        : 'ID: ${cam.id}',
+                    style: TextStyle(
+                      color:
+                          isSelected ? const Color(0xFFE87722) : Colors.white,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _rangeLabel(cam),
+                    style: const TextStyle(
+                        color: Color(0xFF888888), fontSize: 12),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(Icons.check, color: Color(0xFFE87722))
+                      : null,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await widget.sp.switchCamera(
+                      cam.id,
+                      cam.zoomMin ?? 0.0,
+                      cam.zoomMax ?? 0.0,
+                    );
+                  },
+                );
+              }),
+          ],
         ),
       ),
     );

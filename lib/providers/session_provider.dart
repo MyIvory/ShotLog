@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/session.dart';
 import '../models/shot.dart';
@@ -7,6 +8,7 @@ import '../database/session_repository.dart';
 import '../database/shot_repository.dart';
 import '../services/audio_detection_service.dart';
 import '../services/video_recording_service.dart';
+import '../services/video_trim_service.dart';
 import '../services/sound_feedback_service.dart';
 import '../services/bluetooth_button_service.dart';
 import '../services/settings_service.dart';
@@ -46,6 +48,27 @@ class SessionProvider extends ChangeNotifier {
 
   Future<void> setZoom(double zoom) => _video.setZoom(zoom);
 
+  double get cameraZoomMin => _settings.cameraZoomMin;
+  double get cameraZoomMax => _settings.cameraZoomMax;
+  AppSettings get settings => _settings;
+
+  /// Switches to a different camera while the session is in the ready state.
+  Future<void> switchCamera(String cameraId, double autoZoomMin, double autoZoomMax) async {
+    if (_state != SessionState.ready) return;
+    // Prefer per-camera saved range over auto-computed fallback.
+    final saved = await SettingsService().loadCameraZoomRange(cameraId);
+    final zoomMin = saved?.$1 ?? autoZoomMin;
+    final zoomMax = saved?.$2 ?? autoZoomMax;
+    _settings = _settings.copyWith(
+      selectedCameraId: cameraId,
+      cameraZoomMin: zoomMin,
+      cameraZoomMax: zoomMax,
+    );
+    await SettingsService().save(_settings);
+    await _video.initialize(cameraId: cameraId);
+    notifyListeners();
+  }
+
   Future<void> updateDetectionThreshold(double v) async {
     _settings = _settings.copyWith(detectionDbfs: v);
     _audio.updateThreshold(v);
@@ -60,7 +83,7 @@ class SessionProvider extends ChangeNotifier {
     _settings = settings;
     _shots.clear();
 
-    await _video.initialize();
+    await _video.initialize(cameraId: settings.selectedCameraId);
 
     final sessionWithThreshold = session.copyWith(detectionDbfs: settings.detectionDbfs);
     final id = await _sessionRepo.insert(sessionWithThreshold);
@@ -83,7 +106,7 @@ class SessionProvider extends ChangeNotifier {
     final existing = await _shotRepo.getBySession(session.id!);
     _shots.addAll(existing);
 
-    await _video.initialize();
+    await _video.initialize(cameraId: settings.selectedCameraId);
     _activeSession = session;
 
     if (settings.triggerMode == TriggerMode.bluetooth) {
@@ -201,12 +224,32 @@ class SessionProvider extends ChangeNotifier {
       final clipPath = await _video.stopRecording(delete: false);
 
       if (clipPath != null && _activeSession?.id != null) {
+        // Trim pre-shot footage: keep only preRollSec before the shot.
+        final trimStartMs =
+            (shotOffsetMs - _settings.preRollSec * 1000).clamp(0, shotOffsetMs);
+        String finalPath = clipPath;
+        int finalOffsetMs = shotOffsetMs;
+
+        if (trimStartMs > 0) {
+          final trimmedPath = clipPath.replaceAll('.mp4', '_t.mp4');
+          final result = await VideoTrimService().trimClip(
+            inputPath: clipPath,
+            outputPath: trimmedPath,
+            startMs: trimStartMs,
+          );
+          if (result != null) {
+            try { await File(clipPath).delete(); } catch (_) {}
+            finalPath = result;
+            finalOffsetMs = shotOffsetMs - trimStartMs;
+          }
+        }
+
         final shot = Shot(
           sessionId: _activeSession!.id!,
           shotNumber: _shots.length + 1,
           detectedAt: _recordingStartTime!.add(Duration(milliseconds: shotOffsetMs)),
-          clipPath: clipPath,
-          shotOffsetMs: shotOffsetMs,
+          clipPath: finalPath,
+          shotOffsetMs: finalOffsetMs,
           triggerDbfs: triggerDbfs,
         );
         final id = await _shotRepo.insert(shot);

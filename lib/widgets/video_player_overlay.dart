@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import '../models/shot.dart';
 
@@ -21,6 +22,7 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _initPlayer();
   }
 
@@ -46,6 +48,7 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _ctrl?.dispose();
     super.dispose();
   }
@@ -85,204 +88,213 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
         : 0.0;
 
     return Material(
-      color: const Color(0xFF050503),
-      child: SafeArea(
-        child: Column(
-          children: [
-            // ── Top bar ──────────────────────────────────────────────────
-            Container(
-              color: const Color(0xFF050503),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.chevron_left,
-                        color: Color(0xFFE87722), size: 24),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Постріл #${widget.shot.shotNumber}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFFC0B4AC),
+      color: Colors.black,
+      child: Stack(
+        children: [
+          // ── Video — fills entire screen ──────────────────────────────
+          Positioned.fill(
+            child: _ready && ctrl != null
+                ? FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: ctrl.value.size.width,
+                      height: ctrl.value.size.height,
+                      child: VideoPlayer(ctrl),
                     ),
-                  ),
-                ],
+                  )
+                : const Center(child: CircularProgressIndicator()),
+          ),
+
+          // ── Top bar overlay ──────────────────────────────────────────
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xCC000000), Colors.transparent],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 12, 24),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.chevron_left,
+                            color: Color(0xFFE87722), size: 24),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Постріл #${widget.shot.shotNumber}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFC0B4AC),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+          ),
 
-            // ── Video ────────────────────────────────────────────────────
-            Expanded(
-              child: _ready && ctrl != null
-                  ? Center(
-                      child: AspectRatio(
-                        aspectRatio: ctrl.value.aspectRatio,
-                        child: VideoPlayer(ctrl),
-                      ),
-                    )
-                  : const Center(child: CircularProgressIndicator()),
-            ),
-
-            // ── Progress panel ───────────────────────────────────────────
-            if (_ready && ctrl != null)
-              Container(
-                color: const Color(0xFF0D0B09),
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (widget.shot.triggerDbfs != null)
-                      Text(
-                        '${widget.shot.triggerDbfs!.toStringAsFixed(1)} dBFS'
-                        ' · ${(widget.shot.shotOffsetMs / 1000).toStringAsFixed(2)}с до пострілу',
-                        style: const TextStyle(
-                            fontSize: 9, color: Color(0xFF5A5450)),
-                      ),
-                    const SizedBox(height: 6),
-                    // Progress track
-                    LayoutBuilder(builder: (ctx, constraints) {
-                      final w = constraints.maxWidth;
-                      return GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onHorizontalDragUpdate: (d) {
-                          final frac =
-                              (d.localPosition.dx / w).clamp(0.0, 1.0);
-                          ctrl.seekTo(Duration(
-                              milliseconds: (frac * durationMs).toInt()));
-                        },
-                        onTapDown: (d) {
-                          final frac =
-                              (d.localPosition.dx / w).clamp(0.0, 1.0);
-                          ctrl.seekTo(Duration(
-                              milliseconds: (frac * durationMs).toInt()));
-                        },
-                        child: SizedBox(
-                          height: 20,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            clipBehavior: Clip.none,
-                            children: [
-                              // Track background
-                              Container(
-                                height: 3,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF2A2420),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              // Played fill
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: FractionallySizedBox(
-                                  widthFactor: posFraction,
-                                  child: Container(
+          // ── Bottom controls overlay ──────────────────────────────────
+          if (_ready && ctrl != null)
+            Positioned(
+              bottom: 0, left: 0, right: 0,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Color(0xDD000000), Colors.transparent],
+                  ),
+                ),
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 24, 12, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Progress track ─────────────────────────────
+                        LayoutBuilder(builder: (ctx, constraints) {
+                          final w = constraints.maxWidth;
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onHorizontalDragUpdate: (d) {
+                              final frac =
+                                  (d.localPosition.dx / w).clamp(0.0, 1.0);
+                              ctrl.seekTo(Duration(
+                                  milliseconds: (frac * durationMs).toInt()));
+                            },
+                            onTapDown: (d) {
+                              final frac =
+                                  (d.localPosition.dx / w).clamp(0.0, 1.0);
+                              ctrl.seekTo(Duration(
+                                  milliseconds: (frac * durationMs).toInt()));
+                            },
+                            child: SizedBox(
+                              height: 24,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Container(
                                     height: 3,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE87722),
+                                      color: const Color(0x66FFFFFF),
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
-                                ),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FractionallySizedBox(
+                                      widthFactor: posFraction,
+                                      child: Container(
+                                        height: 3,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE87722),
+                                          borderRadius:
+                                              BorderRadius.circular(2),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Shot moment marker ▼
+                                  Positioned(
+                                    left: (w * shotFraction - 9)
+                                        .clamp(0, w - 18),
+                                    top: 0,
+                                    child: const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Color(0xFFE87722),
+                                      size: 20,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              // Shot moment marker ▼
-                              Positioned(
-                                left: (w * shotFraction - 9).clamp(0, w - 18),
-                                top: 0,
-                                child: const Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Color(0xFFE87722),
-                                  size: 20,
-                                ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 2),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(_fmtDur(Duration.zero),
+                                style: const TextStyle(
+                                    fontSize: 9, color: Color(0xAAFFFFFF))),
+                            if (widget.shot.triggerDbfs != null)
+                              Text(
+                                '${widget.shot.triggerDbfs!.toStringAsFixed(1)} dBFS',
+                                style: const TextStyle(
+                                    fontSize: 9, color: Color(0x88FFFFFF)),
                               ),
-                            ],
-                          ),
+                            Text(_fmtDur(duration),
+                                style: const TextStyle(
+                                    fontSize: 9, color: Color(0xAAFFFFFF))),
+                          ],
                         ),
-                      );
-                    }),
-                    const SizedBox(height: 3),
-                    // Time labels: start | shot | end
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_fmtDur(Duration.zero),
-                            style: const TextStyle(
-                                fontSize: 9, color: Color(0xFF7A6E68))),
-                        Text(
-                            _fmtDur(Duration(
-                                milliseconds: widget.shot.shotOffsetMs)),
-                            style: const TextStyle(
-                                fontSize: 9, color: Color(0xFF7A6E68))),
-                        Text(_fmtDur(duration),
-                            style: const TextStyle(
-                                fontSize: 9, color: Color(0xFF7A6E68))),
+                        const SizedBox(height: 8),
+                        // ── Playback controls ──────────────────────────
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _CtrlBtn(label: '–5с', onTap: () => _skip(-5)),
+                            IconButton(
+                              icon: const Icon(Icons.skip_previous,
+                                  color: Color(0xCCFFFFFF)),
+                              iconSize: 28,
+                              onPressed: () {
+                                ctrl.seekTo(Duration.zero);
+                                ctrl.play();
+                              },
+                            ),
+                            _BigPlayButton(
+                              playing: playing,
+                              onTap: () =>
+                                  playing ? ctrl.pause() : ctrl.play(),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.skip_next,
+                                  color: Color(0xCCFFFFFF)),
+                              iconSize: 28,
+                              onPressed: () => ctrl.seekTo(Duration(
+                                  milliseconds: widget.shot.shotOffsetMs)),
+                            ),
+                            _CtrlBtn(label: '+5с', onTap: () => _skip(5)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _SpeedChip(
+                                label: '0.5×',
+                                active: _speed == 0.5,
+                                onTap: () => _setSpeed(0.5)),
+                            const SizedBox(width: 6),
+                            _SpeedChip(
+                                label: '1×',
+                                active: _speed == 1.0,
+                                onTap: () => _setSpeed(1.0)),
+                            const SizedBox(width: 6),
+                            _SpeedChip(
+                                label: '2×',
+                                active: _speed == 2.0,
+                                onTap: () => _setSpeed(2.0)),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
                 ),
               ),
-
-            // ── Playback controls ────────────────────────────────────────
-            if (_ready && ctrl != null)
-              Container(
-                color: const Color(0xFF0D0B09),
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _CtrlBtn(label: '–5с', onTap: () => _skip(-5)),
-                        IconButton(
-                          icon: const Icon(Icons.skip_previous,
-                              color: Color(0xFF7A7470)),
-                          iconSize: 28,
-                          onPressed: () {
-                            ctrl.seekTo(Duration.zero);
-                            ctrl.play();
-                          },
-                        ),
-                        _BigPlayButton(
-                          playing: playing,
-                          onTap: () =>
-                              playing ? ctrl.pause() : ctrl.play(),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.skip_next,
-                              color: Color(0xFF7A7470)),
-                          iconSize: 28,
-                          onPressed: () => ctrl.seekTo(
-                              Duration(milliseconds: widget.shot.shotOffsetMs)),
-                        ),
-                        _CtrlBtn(label: '+5с', onTap: () => _skip(5)),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _SpeedChip(
-                            label: '0.5×',
-                            active: _speed == 0.5,
-                            onTap: () => _setSpeed(0.5)),
-                        const SizedBox(width: 6),
-                        _SpeedChip(
-                            label: '1×',
-                            active: _speed == 1.0,
-                            onTap: () => _setSpeed(1.0)),
-                        const SizedBox(width: 6),
-                        _SpeedChip(
-                            label: '2×',
-                            active: _speed == 2.0,
-                            onTap: () => _setSpeed(2.0)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
