@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -120,21 +121,15 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                 padding: const EdgeInsets.fromLTRB(8, 8, 12, 24),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Icon(Icons.chevron_left,
-                            color: Color(0xFFE87722), size: 24),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Постріл #${widget.shot.shotNumber}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFFC0B4AC),
+                    _GlassBox(
+                      radius: 10,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.chevron_left,
+                              color: Color(0xFFE87722), size: 24),
+                        ),
                       ),
                     ),
                   ],
@@ -161,112 +156,207 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Progress track ─────────────────────────────
-                        LayoutBuilder(builder: (ctx, constraints) {
-                          final w = constraints.maxWidth;
-                          return GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onHorizontalDragUpdate: (d) {
-                              final frac =
-                                  (d.localPosition.dx / w).clamp(0.0, 1.0);
-                              ctrl.seekTo(Duration(
-                                  milliseconds: (frac * durationMs).toInt()));
-                            },
-                            onTapDown: (d) {
-                              final frac =
-                                  (d.localPosition.dx / w).clamp(0.0, 1.0);
-                              ctrl.seekTo(Duration(
-                                  milliseconds: (frac * durationMs).toInt()));
-                            },
-                            child: SizedBox(
-                              height: 24,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                clipBehavior: Clip.none,
+                        // ── Progress track (frosted glass) ─────────────
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0x1AFFFFFF),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0x28FFFFFF),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    height: 3,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0x66FFFFFF),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: FractionallySizedBox(
-                                      widthFactor: posFraction,
-                                      child: Container(
-                                        height: 3,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE87722),
-                                          borderRadius:
-                                              BorderRadius.circular(2),
+                                  LayoutBuilder(builder: (ctx, constraints) {
+                                    final w = constraints.maxWidth;
+                                    return GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onHorizontalDragUpdate: (d) {
+                                        final frac = (d.localPosition.dx / w)
+                                            .clamp(0.0, 1.0);
+                                        ctrl.seekTo(Duration(
+                                            milliseconds:
+                                                (frac * durationMs).toInt()));
+                                      },
+                                      onTapDown: (d) {
+                                        final frac = (d.localPosition.dx / w)
+                                            .clamp(0.0, 1.0);
+                                        ctrl.seekTo(Duration(
+                                            milliseconds:
+                                                (frac * durationMs).toInt()));
+                                      },
+                                      child: SizedBox(
+                                        height: 28,
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            Container(
+                                              height: 5,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0x40FFFFFF),
+                                                borderRadius:
+                                                    BorderRadius.circular(3),
+                                              ),
+                                            ),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: FractionallySizedBox(
+                                                widthFactor: posFraction,
+                                                child: Container(
+                                                  height: 5,
+                                                  decoration: BoxDecoration(
+                                                    gradient:
+                                                        const LinearGradient(
+                                                      colors: [
+                                                        Color(0xFFFFB347),
+                                                        Color(0xFFE87722),
+                                                      ],
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            3),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Shot moment marker ◎
+                                            Positioned(
+                                              left: (w * shotFraction - 9)
+                                                  .clamp(0, w - 18),
+                                              top: 4,
+                                              child: SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    Container(
+                                                      width: 16,
+                                                      height: 16,
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        border: Border.all(
+                                                          color: const Color(
+                                                              0xFFFF4040),
+                                                          width: 1.5,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Container(
+                                                      width: 7,
+                                                      height: 7,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                        color:
+                                                            Color(0xFFFF4040),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  // Shot moment marker ▼
-                                  Positioned(
-                                    left: (w * shotFraction - 9)
-                                        .clamp(0, w - 18),
-                                    top: 0,
-                                    child: const Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Color(0xFFE87722),
-                                      size: 20,
-                                    ),
+                                    );
+                                  }),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(_fmtDur(position),
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xCCFFFFFF))),
+                                      Text(
+                                        'Постріл ${widget.shot.shotNumber}',
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFFC0B4AC)),
+                                      ),
+                                      Text(_fmtDur(duration),
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xCCFFFFFF))),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
-                          );
-                        }),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(_fmtDur(Duration.zero),
-                                style: const TextStyle(
-                                    fontSize: 9, color: Color(0xAAFFFFFF))),
-                            if (widget.shot.triggerDbfs != null)
-                              Text(
-                                '${widget.shot.triggerDbfs!.toStringAsFixed(1)} dBFS',
-                                style: const TextStyle(
-                                    fontSize: 9, color: Color(0x88FFFFFF)),
-                              ),
-                            Text(_fmtDur(duration),
-                                style: const TextStyle(
-                                    fontSize: 9, color: Color(0xAAFFFFFF))),
-                          ],
+                          ),
                         ),
                         const SizedBox(height: 8),
                         // ── Playback controls ──────────────────────────
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _CtrlBtn(label: '–5с', onTap: () => _skip(-5)),
-                            IconButton(
-                              icon: const Icon(Icons.skip_previous,
-                                  color: Color(0xCCFFFFFF)),
-                              iconSize: 28,
-                              onPressed: () {
-                                ctrl.seekTo(Duration.zero);
-                                ctrl.play();
-                              },
+                            _GlassBox(
+                              child: GestureDetector(
+                                onTap: () => _skip(-5),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
+                                  child: Text('–5с',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFFC0B4AC))),
+                                ),
+                              ),
                             ),
-                            _BigPlayButton(
-                              playing: playing,
-                              onTap: () =>
-                                  playing ? ctrl.pause() : ctrl.play(),
+                            _GlassBox(
+                              child: IconButton(
+                                icon: const Icon(Icons.skip_previous,
+                                    color: Color(0xCCFFFFFF)),
+                                iconSize: 28,
+                                onPressed: () {
+                                  ctrl.seekTo(Duration.zero);
+                                  ctrl.play();
+                                },
+                              ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.skip_next,
-                                  color: Color(0xCCFFFFFF)),
-                              iconSize: 28,
-                              onPressed: () => ctrl.seekTo(Duration(
-                                  milliseconds: widget.shot.shotOffsetMs)),
+                            _GlassBox(
+                              radius: 36,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: _BigPlayButton(
+                                  playing: playing,
+                                  onTap: () =>
+                                      playing ? ctrl.pause() : ctrl.play(),
+                                ),
+                              ),
                             ),
-                            _CtrlBtn(label: '+5с', onTap: () => _skip(5)),
+                            _GlassBox(
+                              child: IconButton(
+                                icon: const Icon(Icons.skip_next,
+                                    color: Color(0xCCFFFFFF)),
+                                iconSize: 28,
+                                onPressed: () => ctrl.seekTo(Duration(
+                                    milliseconds: widget.shot.shotOffsetMs)),
+                              ),
+                            ),
+                            _GlassBox(
+                              child: GestureDetector(
+                                onTap: () => _skip(5),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
+                                  child: Text('+5с',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFFC0B4AC))),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -301,6 +391,30 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
 }
 
 // ── Helper widgets ────────────────────────────────────────────────────────────
+
+class _GlassBox extends StatelessWidget {
+  final Widget child;
+  final double radius;
+  const _GlassBox({required this.child, this.radius = 12});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0x1AFFFFFF),
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(color: const Color(0x28FFFFFF), width: 0.8),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
 
 class _CtrlBtn extends StatelessWidget {
   final String label;
@@ -357,19 +471,35 @@ class _SpeedChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFFE87722) : const Color(0xFF261E1A),
-          borderRadius: BorderRadius.circular(10),
-          border: active ? null : Border.all(color: const Color(0xFF33281F)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: active ? const Color(0xFF1A0A00) : const Color(0xFFC89A6A),
-            fontWeight: active ? FontWeight.w700 : FontWeight.normal,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: active
+                  ? const Color(0x55E87722)
+                  : const Color(0x1AFFFFFF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: active
+                    ? const Color(0xCCE87722)
+                    : const Color(0x28FFFFFF),
+                width: 0.8,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: active
+                    ? const Color(0xFFFFE0C0)
+                    : const Color(0xFFC89A6A),
+                fontWeight:
+                    active ? FontWeight.w700 : FontWeight.normal,
+              ),
+            ),
           ),
         ),
       ),
