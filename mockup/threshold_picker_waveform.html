@@ -1,0 +1,378 @@
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+.wrap {
+  width: 360px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Roboto', sans-serif;
+}
+
+.sheet {
+  background: #100c0a;
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: 24px 24px 0 0;
+  overflow: hidden;
+}
+
+.handle {
+  width: 36px; height: 4px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.header {
+  padding: 14px 20px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.header-left .title {
+  font-size: 17px; font-weight: 600;
+  color: #f0eae5; letter-spacing: -0.2px;
+}
+.header-left .subtitle {
+  font-size: 12px; color: rgba(240,234,229,0.4);
+  margin-top: 3px;
+}
+
+.val-badge {
+  background: rgba(232,119,34,0.15);
+  border: 0.5px solid rgba(232,119,34,0.4);
+  border-radius: 10px;
+  padding: 5px 11px;
+  font-size: 15px; font-weight: 700;
+  color: #E87722;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.canvas-wrap {
+  position: relative;
+  margin: 0 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0a0806;
+  border: 0.5px solid rgba(255,255,255,0.07);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+canvas { display: block; }
+
+/* threshold drag hint */
+.thresh-overlay {
+  position: absolute;
+  left: 0; right: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.thresh-label-left {
+  position: absolute;
+  left: 10px;
+  font-size: 10px; font-weight: 600;
+  color: rgba(232,119,34,0.75);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.thresh-label-right {
+  position: absolute;
+  right: 10px;
+  font-size: 12px; font-weight: 700;
+  color: #E87722;
+  font-variant-numeric: tabular-nums;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: rgba(232,119,34,0.15);
+  border: 0.5px solid rgba(232,119,34,0.35);
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+.footer {
+  padding: 12px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-stats {
+  display: flex; gap: 8px;
+}
+
+.stat-chip {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.stat-chip .sl { font-size: 10px; color: rgba(240,234,229,0.35); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-chip .sv { font-size: 13px; font-weight: 600; color: #f0eae5; font-variant-numeric: tabular-nums; }
+.sv.green { color: #6ee0a0; }
+.sv.orange { color: #E87722; }
+
+.footer-btns { display: flex; gap: 8px; }
+
+.btn-cancel {
+  flex: 1; padding: 12px; border-radius: 12px;
+  background: rgba(255,255,255,0.07);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  font-size: 14px; font-weight: 500;
+  color: rgba(240,234,229,0.65); text-align: center; cursor: pointer;
+}
+.btn-save {
+  flex: 2; padding: 12px; border-radius: 12px;
+  background: #E87722; border: none;
+  font-size: 14px; font-weight: 600;
+  color: #1a0a00; text-align: center; cursor: pointer;
+}
+</style>
+
+<div class="wrap">
+<div class="sheet">
+  <div class="handle"></div>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="title">Поріг детекції</div>
+      <div class="subtitle">Тягніть горизонтальну лінію</div>
+    </div>
+    <div class="val-badge" id="valBadge">−20 dBFS</div>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="vu" width="328" height="300"></canvas>
+    <div class="thresh-label-left" id="lblLeft" style="top:40%">поріг</div>
+    <div class="thresh-label-right" id="lblRight" style="top:40%">−20 dBFS</div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-stats">
+      <div class="stat-chip"><div class="sl">Зараз</div><div class="sv green" id="curVal">−42 dBFS</div></div>
+      <div class="stat-chip"><div class="sl">Поріг</div><div class="sv orange" id="thrVal">−20 dBFS</div></div>
+      <div class="stat-chip"><div class="sl">Запас</div><div class="sv" id="marginVal">22 dB</div></div>
+    </div>
+    <div class="footer-btns">
+      <div class="btn-cancel">Скасувати</div>
+      <div class="btn-save">Зберегти</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const canvas = document.getElementById('vu');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const DB_MIN = -80, DB_MAX = 0, DB_RANGE = 80;
+let threshDb = -20;
+let currentDb = -42;
+let isDragging = false;
+let phase = 0;
+
+// Waveform history buffer (scrolling)
+const HISTORY = 220;
+let history = new Array(HISTORY).fill(-70);
+
+function dbToY(db) {
+  const f = (db - DB_MIN) / DB_RANGE;
+  return H - f * H;
+}
+
+function yToDb(y) {
+  return Math.round(DB_MIN + (1 - y / H) * DB_RANGE);
+}
+
+// Color: green → orange → red based on db level vs threshold
+function levelColor(db, alpha) {
+  const margin = threshDb - db;
+  let r, g, b;
+  if (margin > 15) { r=110; g=224; b=160; }        // well below — green
+  else if (margin > 5) {                             // approaching — orange
+    const t = (15 - margin) / 10;
+    r = Math.round(110 + t*(232-110));
+    g = Math.round(224 + t*(119-224));
+    b = Math.round(160 + t*(34-160));
+  } else if (margin > 0) { r=232; g=119; b=34; }    // near — amber
+  else { r=255; g=80; b=60; }                        // above — red
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient — warmer at bottom
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0a0806');
+  bg.addColorStop(1, '#0f0c09');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // dB grid lines
+  for (let db = -80; db <= 0; db += 10) {
+    const y = dbToY(db);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, y); ctx.lineTo(W, y);
+    ctx.stroke();
+    // label
+    ctx.fillStyle = 'rgba(240,234,229,0.18)';
+    ctx.font = '9px -apple-system, Roboto, sans-serif';
+    ctx.fillText(db === 0 ? '0' : db.toString(), 4, y - 3);
+  }
+
+  // ── Waveform: multiple layered lines ──
+  const LINES = 18;
+  const lastDb = history[history.length - 1];
+  const amplitude = Math.max(0, (lastDb - DB_MIN) / DB_RANGE); // 0..1
+
+  for (let li = 0; li < LINES; li++) {
+    const t = li / (LINES - 1);          // 0 = back, 1 = front
+    const spread = 0.6 + t * 0.4;        // front lines wider
+    const lineAlpha = 0.05 + t * 0.55;
+    const phaseOff = (li - LINES / 2) * 0.18;
+
+    ctx.beginPath();
+    let started = false;
+
+    for (let i = 0; i < HISTORY; i++) {
+      const x = (i / (HISTORY - 1)) * W;
+      const histDb = history[i];
+      const histAmp = Math.max(0, (histDb - DB_MIN) / DB_RANGE);
+
+      // Waveform displacement around the center-of-mass y
+      const centerY = dbToY(histDb);
+      const waveAmp = histAmp * H * 0.18 * spread;
+      const freq1 = 2.5, freq2 = 5.1, freq3 = 8.3;
+      const wave =
+        Math.sin(i * 0.045 * freq1 + phase + phaseOff) * waveAmp * 0.6 +
+        Math.sin(i * 0.045 * freq2 + phase * 1.3 + phaseOff * 0.7) * waveAmp * 0.25 +
+        Math.sin(i * 0.045 * freq3 + phase * 0.7 + phaseOff * 1.3) * waveAmp * 0.15;
+
+      const y = centerY + wave;
+
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    }
+
+    const col = levelColor(lastDb, lineAlpha);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = t < 0.3 ? 0.4 : t < 0.7 ? 0.7 : 1.0;
+    ctx.stroke();
+  }
+
+  // Glow at right edge — current level dot
+  const glowY = dbToY(lastDb);
+  const grd = ctx.createRadialGradient(W - 4, glowY, 0, W - 4, glowY, 28);
+  const gc = levelColor(lastDb, 1);
+  grd.addColorStop(0, gc.replace(/[\d.]+\)$/, '0.7)'));
+  grd.addColorStop(1, gc.replace(/[\d.]+\)$/, '0)'));
+  ctx.fillStyle = grd;
+  ctx.fillRect(W - 32, glowY - 28, 32, 56);
+
+  // ── Threshold line ──
+  const threshY = dbToY(threshDb);
+
+  // Band above threshold (danger zone) — subtle red tint
+  ctx.fillStyle = 'rgba(255,80,60,0.04)';
+  ctx.fillRect(0, 0, W, threshY);
+
+  // Dashed line
+  ctx.setLineDash([8, 5]);
+  ctx.strokeStyle = 'rgba(232,119,34,0.9)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, threshY); ctx.lineTo(W, threshY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Threshold glow
+  const tg = ctx.createLinearGradient(0, threshY - 12, 0, threshY + 12);
+  tg.addColorStop(0, 'rgba(232,119,34,0)');
+  tg.addColorStop(0.5, 'rgba(232,119,34,0.12)');
+  tg.addColorStop(1, 'rgba(232,119,34,0)');
+  ctx.fillStyle = tg;
+  ctx.fillRect(0, threshY - 12, W, 24);
+
+  // Drag handle — pill on right side
+  const pillW = 48, pillH = 22, pillX = W - pillW - 8, pillY = threshY - pillH / 2;
+  ctx.fillStyle = '#E87722';
+  ctx.beginPath();
+  ctx.roundRect(pillX, pillY, pillW, pillH, 11);
+  ctx.fill();
+  // ribs
+  for (let ri = 0; ri < 3; ri++) {
+    const rx = pillX + pillW / 2 - 5 + ri * 5;
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillRect(rx - 0.5, pillY + 5, 1, pillH - 10);
+  }
+
+  // Update overlay labels
+  const pct = (threshY / H * 100).toFixed(1);
+  document.getElementById('lblLeft').style.top = pct + '%';
+  document.getElementById('lblRight').style.top = pct + '%';
+  document.getElementById('lblRight').textContent = threshDb + ' dBFS';
+  document.getElementById('valBadge').textContent = threshDb + ' dBFS';
+  document.getElementById('thrVal').textContent = threshDb + ' dBFS';
+  document.getElementById('curVal').textContent = Math.round(currentDb) + ' dBFS';
+  const margin = threshDb - Math.round(currentDb);
+  const mEl = document.getElementById('marginVal');
+  mEl.textContent = (margin > 0 ? '+' : '') + margin + ' dB';
+  mEl.className = 'sv ' + (margin >= 10 ? 'green' : margin >= 3 ? 'orange' : '');
+  if (margin < 3) mEl.style.color = '#ff6050'; else mEl.style.color = '';
+}
+
+// Animation loop
+let lastTime = 0;
+function loop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+  phase += dt * 1.8;
+
+  // Simulate mic: slow noise with occasional spike
+  const target = Math.random() < 0.03
+    ? -25 + Math.random() * 12          // spike
+    : -55 + (Math.random() - 0.5) * 14; // background noise
+  currentDb += (target - currentDb) * 0.15;
+  currentDb = Math.max(DB_MIN, Math.min(DB_MAX, currentDb));
+
+  history.push(currentDb);
+  if (history.length > HISTORY) history.shift();
+
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Drag interaction
+const wrap = document.getElementById('canvasWrap');
+
+function applyY(clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleY = H / rect.height;
+  const y = (clientY - rect.top) * scaleY;
+  threshDb = Math.max(DB_MIN, Math.min(DB_MAX, yToDb(y)));
+}
+
+wrap.addEventListener('mousedown', e => { isDragging = true; applyY(e.clientY); });
+document.addEventListener('mousemove', e => { if (isDragging) applyY(e.clientY); });
+document.addEventListener('mouseup', () => { isDragging = false; });
+
+wrap.addEventListener('touchstart', e => {
+  e.preventDefault(); isDragging = true; applyY(e.touches[0].clientY);
+}, { passive: false });
+document.addEventListener('touchmove', e => {
+  if (!isDragging) return; e.preventDefault(); applyY(e.touches[0].clientY);
+}, { passive: false });
+document.addEventListener('touchend', () => { isDragging = false; });
+</script>
