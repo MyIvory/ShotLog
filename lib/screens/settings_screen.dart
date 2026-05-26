@@ -10,7 +10,6 @@ import 'equipment_screen.dart';
 
 const _kAccent    = Color(0xFFE87722);
 const _kBlue      = Color(0xFF5A8FB8);
-const _kGreen     = Color(0xFF6EE0A0);
 const _kText      = Color(0xFFF0EAE5);
 const _kHint      = Color(0x73F0EAE5);   // 45 %
 const _kLabel     = Color(0x99F0EAE5);   // 60 % — section labels
@@ -22,7 +21,6 @@ const _kBadgeBdr  = Color(0x33FFFFFF);   // 1px badge border
 
 const _kBgAmber   = Color(0xCCB05010);
 const _kBgBlue    = Color(0xCC2A5F88);
-const _kBgGreen   = Color(0xCC1E7048);
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -192,11 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Icons.inventory_2_outlined, _kBgAmber),
                           label: 'Гвинтівки та набої',
                           hint: 'Керування спорядженням',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const EquipmentScreen()),
-                          ),
+                          onTap: () => showEquipmentSheet(context),
                         ),
                       ]),
                     ],
@@ -572,7 +566,7 @@ class _SliderPainter extends CustomPainter {
     final tx = (size.width * frac).clamp(9.0, size.width - 9.0);
 
     canvas.drawCircle(
-        Offset(tx, cy), 13, Paint()..color = colors.last.withOpacity(0.22));
+        Offset(tx, cy), 13, Paint()..color = colors.last.withValues(alpha: 0.22));
     canvas.drawCircle(Offset(tx, cy), 9, Paint()..color = colors.last);
     canvas.drawCircle(
       Offset(tx, cy),
@@ -734,6 +728,7 @@ class _CameraGlassRow extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => _CameraPickerSheet(
         selectedId: selectedId,
         onChanged: onChanged,
@@ -763,8 +758,7 @@ class _CameraGlassRow extends StatelessWidget {
 class _CameraPickerSheet extends StatefulWidget {
   final String selectedId;
   final _CameraSelectedCallback onChanged;
-  const _CameraPickerSheet(
-      {required this.selectedId, required this.onChanged});
+  const _CameraPickerSheet({required this.selectedId, required this.onChanged});
 
   @override
   State<_CameraPickerSheet> createState() => _CameraPickerSheetState();
@@ -800,22 +794,15 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
         }
       }
       if (!mounted) return;
-      setState(() {
-        _cameras = list;
-        _adjustedRanges = ranges;
-      });
+      setState(() { _cameras = list; _adjustedRanges = ranges; });
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     }
   }
 
-  String _zl(double z) =>
-      z == z.roundToDouble() ? '${z.toInt()}×' : '${z.toStringAsFixed(1)}×';
-
   Future<void> _apply() async {
     for (final entry in _adjustedRanges.entries) {
-      await _svc.saveCameraZoomRange(
-          entry.key, entry.value.$1, entry.value.$2);
+      await _svc.saveCameraZoomRange(entry.key, entry.value.$1, entry.value.$2);
     }
     final range = _selId.isNotEmpty ? _adjustedRanges[_selId] : null;
     widget.onChanged(_selId, range?.$1 ?? 0.0, range?.$2 ?? 0.0);
@@ -823,71 +810,321 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          top: 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-              child: Text('Вибір камери', style: tt.titleMedium),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: Stack(
+        children: [
+          // Background image — same as settings, but much darker overlay
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/bg_rifle.webp',
+              fit: BoxFit.cover,
+              alignment: const Alignment(0.2, -1.0),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'Виберіть лінзу суміщену з окуляром прицілу. '
-                'Слайдер кожної камери обмежений її фізичним діапазоном.',
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('Помилка: $_error',
-                    style: TextStyle(color: cs.error)),
-              )
-            else if (_cameras == null)
-              const SizedBox(
-                  height: 80,
-                  child: Center(child: CircularProgressIndicator()))
-            else ...[
-              ListTile(
-                leading: Radio<String>(
-                  value: '',
-                  groupValue: _selId,
-                  onChanged: (v) => setState(() => _selId = v ?? ''),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xE8100C0A), Color(0xF5100C0A)],
                 ),
-                title: Text('Авто (за замовчуванням)',
-                    style: tt.bodyMedium),
-                subtitle: Text('Повний діапазон, без обмежень',
-                    style: tt.bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant)),
-                onTap: () => setState(() => _selId = ''),
               ),
-              const Divider(height: 1),
-              for (final cam in _cameras!) ...[
-                _buildCameraRow(cam, tt, cs),
-                const Divider(height: 1),
-              ],
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () async {
+            ),
+          ),
+          // Border overlay
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(
+                  top:   BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
+                  left:  BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
+                  right: BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
+                ),
+              ),
+            ),
+          ),
+          // Content
+          Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            width: 36, height: 4,
+            margin: const EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(
+              color: const Color(0x2EFFFFFF),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Header
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Камера для запису',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
+                          color: Color(0xFFF0EAE5), letterSpacing: -0.2)),
+                  SizedBox(height: 3),
+                  Text('Оберіть лінзу суміщену з окуляром прицілу',
+                      style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
+                ],
+              ),
+            ),
+          ),
+          // Content
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text('Помилка: $_error',
+                  style: const TextStyle(color: Color(0xFFFF6050))),
+            )
+          else if (_cameras == null)
+            const SizedBox(
+                height: 100,
+                child: Center(
+                    child: CircularProgressIndicator(color: Color(0xFFE87722))))
+          else
+            Flexible(
+              child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Column(
+                children: [
+                  _CamCard(
+                    id: '',
+                    name: 'Авто',
+                    subtitle: 'Повний діапазон · без обмежень',
+                    focalLength: -1,
+                    selected: _selId.isEmpty,
+                    onTap: () => setState(() => _selId = ''),
+                  ),
+                  for (final cam in _cameras!) ...[
+                    const SizedBox(height: 8),
+                    Builder(builder: (_) {
+                      final range = _adjustedRanges[cam.id];
+                      final lo = range?.$1 ?? cam.zoomMin ?? 1.0;
+                      final hi = range?.$2 ?? cam.zoomMax ?? 10.0;
+                      return _CamCard(
+                        id: cam.id,
+                        name: cam.focalLength > 0
+                            ? '${cam.focalLength.toStringAsFixed(1)} мм'
+                            : 'Камера ${cam.id}',
+                        subtitle: cam.isPhysical
+                            ? 'ID: ${cam.id} · фізична лінза'
+                            : 'ID: ${cam.id}',
+                        focalLength: cam.focalLength,
+                        selected: _selId == cam.id,
+                        zoomMin: cam.zoomMin,
+                        zoomMax: cam.zoomMax,
+                        selectedZoomMin: lo,
+                        selectedZoomMax: hi,
+                        onTap: () => setState(() => _selId = cam.id),
+                        onRangeChanged: (min, max) =>
+                            setState(() => _adjustedRanges[cam.id] = (min, max)),
+                      );
+                    }),
+                  ],
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+            ),
+          // Footer
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+                16, 4, 16, MediaQuery.of(context).padding.bottom + 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      decoration: BoxDecoration(
+                        color: const Color(0x12FFFFFF),
+                        border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: Text('Скасувати',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
+                                color: Color(0xA6F0EAE5))),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: GestureDetector(
+                    onTap: () async {
                       await _apply();
                       if (context.mounted) Navigator.pop(context);
                     },
-                    child: const Text('Зберегти'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE87722),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [BoxShadow(
+                          color: Color(0x4DE87722), blurRadius: 12,
+                          offset: Offset(0, 2),
+                        )],
+                      ),
+                      child: const Center(
+                        child: Text('Зберегти',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                                color: Color(0xFF1A0A00))),
+                      ),
+                    ),
                   ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Camera card ───────────────────────────────────────────────────────────────
+
+class _CamCard extends StatelessWidget {
+  final String id;
+  final String name;
+  final String subtitle;
+  final double focalLength;
+  final bool selected;
+  final double? zoomMin, zoomMax, selectedZoomMin, selectedZoomMax;
+  final VoidCallback onTap;
+  final void Function(double, double)? onRangeChanged;
+
+  const _CamCard({
+    required this.id,
+    required this.name,
+    required this.subtitle,
+    required this.focalLength,
+    required this.selected,
+    this.zoomMin,
+    this.zoomMax,
+    this.selectedZoomMin,
+    this.selectedZoomMax,
+    required this.onTap,
+    this.onRangeChanged,
+  });
+
+  Color get _accent => id.isEmpty
+      ? const Color(0xFF5A8FB8)
+      : const Color(0xFFE87722);
+
+  Color get _iconBg => id.isEmpty
+      ? const Color(0xCC2A5F88)
+      : focalLength > 50
+          ? const Color(0xCC1E7048)
+          : const Color(0xCCB05010);
+
+  String _zl(double z) =>
+      z == z.roundToDouble() ? '${z.toInt()}×' : '${z.toStringAsFixed(1)}×';
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSlider = zoomMin != null && zoomMax != null && zoomMax! > zoomMin!;
+    final lo = selectedZoomMin ?? zoomMin ?? 1.0;
+    final hi = selectedZoomMax ?? zoomMax ?? 10.0;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          color: selected
+              ? _accent.withValues(alpha: 0.07)
+              : const Color(0x0EFFFFFF),
+          border: Border.all(
+            color: selected
+                ? _accent.withValues(alpha: 0.55)
+                : const Color(0x17FFFFFF),
+            width: 0.5,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+              child: Row(
+                children: [
+                  _LensIcon(bg: _iconBg, focalLength: focalLength),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name,
+                            style: const TextStyle(fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFF0EAE5))),
+                        const SizedBox(height: 2),
+                        Text(subtitle,
+                            style: const TextStyle(fontSize: 12,
+                                color: Color(0x6BF0EAE5))),
+                      ],
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 22, height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: selected ? _accent : Colors.transparent,
+                      border: Border.all(
+                        color: selected ? _accent : const Color(0x33FFFFFF),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: selected
+                        ? const Icon(Icons.check, size: 13, color: Colors.white)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+            if (hasSlider) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: Row(
+                  children: [
+                    _ZoomBadge(_zl(lo), active: selected, accent: _accent),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Text('→',
+                          style: const TextStyle(
+                              fontSize: 10, color: Color(0x33F0EAE5))),
+                    ),
+                    _ZoomBadge(_zl(hi), active: selected, accent: _accent),
+                    const Spacer(),
+                    _ZoomBadge('${_zl(zoomMin!)}–${_zl(zoomMax!)}',
+                        active: false, accent: _accent, small: true),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: _DualThumbSlider(
+                  min: zoomMin!,
+                  max: zoomMax!,
+                  lo: lo,
+                  hi: hi,
+                  accent: _accent,
+                  onChanged: onRangeChanged ?? (_, __) {},
                 ),
               ),
             ],
@@ -896,118 +1133,234 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
       ),
     );
   }
-
-  Widget _buildCameraRow(
-      PhysicalCameraInfo cam, TextTheme tt, ColorScheme cs) {
-    final range = _adjustedRanges[cam.id];
-    final hasSlider = cam.zoomMin != null &&
-        cam.zoomMax != null &&
-        cam.zoomMax! > cam.zoomMin!;
-    final lo = range?.$1 ?? cam.zoomMin ?? 1.0;
-    final hi = range?.$2 ?? cam.zoomMax ?? 10.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ListTile(
-          leading: Radio<String>(
-            value: cam.id,
-            groupValue: _selId,
-            onChanged: (v) => setState(() => _selId = v ?? ''),
-          ),
-          title: Text(
-            cam.focalLength > 0
-                ? '${cam.focalLength.toStringAsFixed(1)} мм'
-                    '${cam.isPhysical ? "  •  ID: ${cam.id}" : ""}'
-                : 'ID: ${cam.id}',
-            style: tt.bodyMedium,
-          ),
-          subtitle: hasSlider
-              ? Text('${_zl(lo)} – ${_zl(hi)}',
-                  style: tt.bodySmall
-                      ?.copyWith(color: cs.onSurfaceVariant))
-              : null,
-          onTap: () => setState(() => _selId = cam.id),
-        ),
-        if (hasSlider)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: _ZoomRangeSlider(
-              min: cam.zoomMin!,
-              max: cam.zoomMax!,
-              zoomMin: lo,
-              zoomMax: hi,
-              onChanged: (min, max) =>
-                  setState(() => _adjustedRanges[cam.id] = (min, max)),
-            ),
-          ),
-      ],
-    );
-  }
 }
 
-// ── Zoom range slider ─────────────────────────────────────────────────────────
+// ── Lens icon ─────────────────────────────────────────────────────────────────
 
-class _ZoomRangeSlider extends StatelessWidget {
-  final double min, max, zoomMin, zoomMax;
-  final void Function(double min, double max) onChanged;
-
-  const _ZoomRangeSlider({
-    required this.min,
-    required this.max,
-    required this.zoomMin,
-    required this.zoomMax,
-    required this.onChanged,
-  });
-
-  String _zl(double z) =>
-      z == z.roundToDouble() ? '${z.toInt()}×' : '${z.toStringAsFixed(1)}×';
+class _LensIcon extends StatelessWidget {
+  final Color bg;
+  final double focalLength;
+  const _LensIcon({required this.bg, required this.focalLength});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final range = max - min;
-    if (range <= 0) return const SizedBox.shrink();
+    final dotSize = focalLength > 50 ? 6.0 : focalLength > 20 ? 8.0 : 10.0;
+    final ring1   = focalLength > 50 ? 30.0 : 32.0;
+    final ring2   = focalLength > 50 ? 18.0 : 22.0;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+    return Container(
+      width: 40, height: 40,
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Row(
-            children: [
-              Text('Мін: ${_zl(zoomMin)}', style: tt.bodySmall),
-              const Spacer(),
-              Text('Макс: ${_zl(zoomMax)}', style: tt.bodySmall),
-            ],
-          ),
-          RangeSlider(
-            min: min,
-            max: max,
-            values: RangeValues(
-              zoomMin.clamp(min, max),
-              zoomMax.clamp(min, max),
-            ),
-            divisions: (range * 2).round().clamp(2, 100),
-            activeColor: cs.primary,
-            onChanged: (v) => onChanged(
-              double.parse(v.start.toStringAsFixed(1)),
-              double.parse(v.end.toStringAsFixed(1)),
+          Container(
+            width: ring1, height: ring1,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0x59FFFFFF), width: 1),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(_zl(min),
-                  style: tt.bodySmall
-                      ?.copyWith(color: cs.onSurfaceVariant)),
-              Text(_zl(max),
-                  style: tt.bodySmall
-                      ?.copyWith(color: cs.onSurfaceVariant)),
-            ],
+          Container(
+            width: ring2, height: ring2,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0x59FFFFFF), width: 1),
+            ),
+          ),
+          Container(
+            width: dotSize, height: dotSize,
+            decoration: const BoxDecoration(
+              color: Color(0x73FFFFFF), shape: BoxShape.circle),
           ),
         ],
       ),
     );
   }
+}
+
+// ── Zoom badge ────────────────────────────────────────────────────────────────
+
+class _ZoomBadge extends StatelessWidget {
+  final String text;
+  final bool active;
+  final Color accent;
+  final bool small;
+  const _ZoomBadge(this.text,
+      {required this.active, required this.accent, this.small = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: active ? accent.withValues(alpha: 0.15) : const Color(0x12FFFFFF),
+        border: Border.all(
+          color: active ? accent.withValues(alpha: 0.3) : const Color(0x1AFFFFFF),
+          width: 0.5,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: small ? 10 : 11,
+          fontWeight: FontWeight.w600,
+          color: active ? accent : const Color(0x8CF0EAE5),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Dual thumb slider ─────────────────────────────────────────────────────────
+
+enum _Thumb { lo, hi }
+
+class _DualThumbSlider extends StatefulWidget {
+  final double min, max, lo, hi;
+  final Color accent;
+  final void Function(double lo, double hi) onChanged;
+
+  const _DualThumbSlider({
+    required this.min,
+    required this.max,
+    required this.lo,
+    required this.hi,
+    required this.accent,
+    required this.onChanged,
+  });
+
+  @override
+  State<_DualThumbSlider> createState() => _DualThumbSliderState();
+}
+
+class _DualThumbSliderState extends State<_DualThumbSlider> {
+  _Thumb? _dragging;
+  double _width = 1;
+
+  double _valToX(double val) {
+    final range = widget.max - widget.min;
+    return range <= 0 ? 0 : ((val - widget.min) / range) * _width;
+  }
+
+  double _xToVal(double x) {
+    final frac = (x / _width).clamp(0.0, 1.0);
+    final raw  = widget.min + frac * (widget.max - widget.min);
+    return (raw * 10).round() / 10.0;
+  }
+
+  void _onDragStart(DragStartDetails d) {
+    final x   = d.localPosition.dx;
+    final loX = _valToX(widget.lo);
+    final hiX = _valToX(widget.hi);
+    _dragging = (x - loX).abs() <= (x - hiX).abs() ? _Thumb.lo : _Thumb.hi;
+  }
+
+  void _onDragUpdate(DragUpdateDetails d) {
+    if (_dragging == null) return;
+    final val = _xToVal(d.localPosition.dx);
+    if (_dragging == _Thumb.lo) {
+      widget.onChanged(val.clamp(widget.min, widget.hi - 0.5), widget.hi);
+    } else {
+      widget.onChanged(widget.lo, val.clamp(widget.lo + 0.5, widget.max));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ticks = List.generate(
+        5, (i) => widget.min + i * (widget.max - widget.min) / 4);
+
+    return LayoutBuilder(builder: (_, c) {
+      _width = c.maxWidth;
+      return Column(
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart:  _onDragStart,
+            onHorizontalDragUpdate: _onDragUpdate,
+            onHorizontalDragEnd:    (_) => _dragging = null,
+            child: SizedBox(
+              height: 28, width: _width,
+              child: CustomPaint(
+                painter: _DualSliderPainter(
+                  min: widget.min, max: widget.max,
+                  lo: widget.lo,   hi: widget.hi,
+                  accent: widget.accent,
+                ),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: ticks.map((v) {
+              final s = v == v.roundToDouble()
+                  ? '${v.toInt()}×'
+                  : '${v.toStringAsFixed(1)}×';
+              return Text(s,
+                  style: const TextStyle(
+                      fontSize: 10, color: Color(0x33F0EAE5)));
+            }).toList(),
+          ),
+        ],
+      );
+    });
+  }
+}
+
+class _DualSliderPainter extends CustomPainter {
+  final double min, max, lo, hi;
+  final Color accent;
+  const _DualSliderPainter({
+    required this.min, required this.max,
+    required this.lo,  required this.hi,
+    required this.accent,
+  });
+
+  double _toX(double val, double w) {
+    final range = max - min;
+    return range <= 0 ? 0 : ((val - min) / range) * w;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w  = size.width;
+    final cy = size.height / 2;
+    const trackH = 4.0;
+    const r = Radius.circular(2);
+
+    canvas.drawRRect(
+      RRect.fromLTRBR(0, cy - trackH/2, w, cy + trackH/2, r),
+      Paint()..color = const Color(0x14FFFFFF),
+    );
+
+    final loX = _toX(lo, w).clamp(0.0, w);
+    final hiX = _toX(hi, w).clamp(0.0, w);
+
+    if (hiX > loX) {
+      canvas.drawRRect(
+        RRect.fromLTRBR(loX, cy - trackH/2, hiX, cy + trackH/2, r),
+        Paint()
+          ..shader = LinearGradient(
+            colors: [accent.withValues(alpha: 0.5), accent],
+          ).createShader(Rect.fromLTWH(loX, 0, hiX - loX, trackH)),
+      );
+    }
+
+    for (final x in [loX, hiX]) {
+      canvas.drawCircle(Offset(x, cy), 11,
+          Paint()..color = accent.withValues(alpha: 0.22));
+      canvas.drawCircle(Offset(x, cy), 9, Paint()..color = accent);
+      canvas.drawCircle(Offset(x, cy), 6.5,
+          Paint()
+            ..color = const Color(0xFF1A1210)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.5);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DualSliderPainter old) =>
+      old.lo != lo || old.hi != hi || old.accent != accent;
 }

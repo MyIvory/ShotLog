@@ -1,0 +1,429 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=360">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: #1a1210; display: flex; justify-content: center; }
+
+.phone {
+  width: 360px; min-height: 720px;
+  background: #0d0a09;
+  font-family: -apple-system, 'Roboto', sans-serif;
+  position: relative; overflow: hidden;
+}
+.bg-glow {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 35% at 15% 5%, rgba(232,119,34,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 55%, rgba(160,50,0,0.14) 0%, transparent 60%);
+}
+.screen { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 720px; }
+
+.status-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 24px 6px;
+  font-size: 13px; font-weight: 600; color: #f0eae5;
+}
+.appbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 20px 0;
+}
+.back-btn {
+  width: 36px; height: 36px; border-radius: 12px;
+  background: rgba(255,255,255,0.08); border: 0.5px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  color: #f0eae5; font-size: 18px; cursor: pointer;
+}
+.appbar-title { font-size: 17px; font-weight: 600; color: #f0eae5; letter-spacing: -0.2px; }
+
+.tab-bar { display: flex; gap: 6px; padding: 10px 16px 0; }
+.tab-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px 12px; border-radius: 12px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.08);
+  color: rgba(240,234,229,0.45); transition: all 0.18s;
+}
+.tab-btn.active {
+  background: rgba(232,119,34,0.15); border-color: rgba(232,119,34,0.4); color: #E87722;
+}
+
+.list-area {
+  flex: 1; padding: 12px 16px 88px;
+  display: flex; flex-direction: column; gap: 8px; overflow-y: auto;
+}
+
+.eq-card {
+  background: rgba(255,255,255,0.055); border: 0.5px solid rgba(255,255,255,0.09);
+  border-radius: 16px; overflow: hidden;
+}
+.eq-card-head {
+  display: flex; align-items: center; gap: 12px; padding: 13px 14px 12px;
+}
+.eq-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.eq-icon.rifle-icon { background: rgba(176,80,16,0.5); }
+.eq-icon.bullet-icon { background: rgba(60,120,80,0.5); }
+
+.eq-meta { flex: 1; min-width: 0; }
+.eq-name { font-size: 15px; font-weight: 600; color: #f0eae5; }
+.eq-sub { font-size: 12px; color: rgba(240,234,229,0.42); margin-top: 2px; }
+
+.eq-actions { display: flex; gap: 2px; }
+.action-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer;
+  background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.07);
+  color: rgba(240,234,229,0.5); transition: all 0.15s;
+}
+.action-btn.del:hover { background: rgba(220,60,60,0.15); border-color: rgba(220,60,60,0.3); color: #ff7070; }
+
+.eq-chips { display: flex; gap: 5px; padding: 0 14px 12px; flex-wrap: wrap; }
+.chip {
+  background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.09);
+  border-radius: 7px; padding: 3px 8px;
+  font-size: 11px; font-weight: 500; color: rgba(240,234,229,0.5);
+}
+.chip.accent {
+  background: rgba(232,119,34,0.1); border-color: rgba(232,119,34,0.25);
+  color: rgba(232,119,34,0.85);
+}
+
+.fab {
+  position: absolute; bottom: 28px; right: 20px;
+  width: 56px; height: 56px; border-radius: 18px;
+  background: #E87722;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: #1a0a00; font-weight: 300;
+  box-shadow: 0 4px 20px rgba(232,119,34,0.45);
+  cursor: pointer; z-index: 5; transition: transform 0.1s;
+}
+.fab:active { transform: scale(0.93); }
+
+/* ── Overlays ── */
+.overlay-dim {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 20; align-items: flex-end; justify-content: center;
+}
+.overlay-dim.show { display: flex; }
+
+.bottom-sheet {
+  width: 360px;
+  background: linear-gradient(170deg, #1e1610 0%, #130e0c 100%);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: 24px 24px 0 0; padding-bottom: 24px;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32,0,0.15,1);
+}
+.bottom-sheet.open { transform: translateY(0); }
+
+.bs-handle {
+  width: 36px; height: 4px; background: rgba(255,255,255,0.18);
+  border-radius: 2px; margin: 12px auto 0;
+}
+.bs-header { padding: 14px 20px 6px; }
+.bs-title { font-size: 17px; font-weight: 600; color: #f0eae5; letter-spacing: -0.2px; }
+.bs-subtitle { font-size: 12px; color: rgba(240,234,229,0.38); margin-top: 3px; }
+
+.bs-body { padding: 10px 16px 0; display: flex; flex-direction: column; gap: 9px; }
+
+.glass-input-wrap { display: flex; flex-direction: column; gap: 4px; }
+.glass-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: rgba(240,234,229,0.35); padding-left: 2px;
+}
+.glass-input {
+  background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.12);
+  border-radius: 12px; padding: 11px 14px;
+  font-size: 14px; color: #f0eae5; outline: none;
+  width: 100%; font-family: inherit; transition: border-color 0.15s;
+}
+.glass-input:focus { border-color: rgba(232,119,34,0.5); background: rgba(232,119,34,0.06); }
+.glass-input::placeholder { color: rgba(240,234,229,0.2); }
+
+.input-row { display: flex; gap: 8px; }
+.input-row .glass-input-wrap { flex: 1; }
+.req { color: #E87722; margin-left: 2px; }
+
+.bs-footer { padding: 14px 16px 0; display: flex; gap: 8px; }
+.btn-cancel {
+  flex: 1; padding: 13px; border-radius: 12px;
+  background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.12);
+  font-size: 14px; font-weight: 500; color: rgba(240,234,229,0.65);
+  text-align: center; cursor: pointer; font-family: inherit;
+}
+.btn-save {
+  flex: 2; padding: 13px; border-radius: 12px;
+  background: #E87722; border: none;
+  font-size: 14px; font-weight: 600; color: #1a0a00;
+  text-align: center; cursor: pointer; font-family: inherit;
+  box-shadow: 0 2px 12px rgba(232,119,34,0.35);
+}
+
+.confirm-body { padding: 20px 20px 0; }
+.confirm-icon { font-size: 40px; text-align: center; margin-bottom: 8px; }
+.confirm-title { font-size: 17px; font-weight: 600; color: #f0eae5; text-align: center; }
+.confirm-sub { font-size: 13px; color: rgba(240,234,229,0.42); text-align: center; margin-top: 6px; line-height: 1.4; }
+.btn-delete {
+  flex: 2; padding: 13px; border-radius: 12px;
+  background: rgba(220,60,60,0.85); border: none;
+  font-size: 14px; font-weight: 600; color: #fff;
+  text-align: center; cursor: pointer; font-family: inherit;
+}
+</style>
+
+<div class="phone">
+<div class="bg-glow"></div>
+<div class="screen">
+
+  <div class="status-bar"><span>12:45</span><span style="font-size:12px">●●●</span></div>
+
+  <div class="appbar">
+    <div class="back-btn">‹</div>
+    <div class="appbar-title">Спорядження</div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-btn active" id="tab-rifle" onclick="switchTab('rifle')">🔫 Гвинтівки</div>
+    <div class="tab-btn" id="tab-bullet" onclick="switchTab('bullet')">🟡 Набої</div>
+  </div>
+
+  <div class="list-area" id="list-rifle">
+    <div class="eq-card">
+      <div class="eq-card-head">
+        <div class="eq-icon rifle-icon">🔫</div>
+        <div class="eq-meta">
+          <div class="eq-name">CZ Shadow 2</div>
+          <div class="eq-sub">9×19 мм</div>
+        </div>
+        <div class="eq-actions">
+          <div class="action-btn" onclick="openRifleEdit()">✏️</div>
+          <div class="action-btn del" onclick="openConfirm('CZ Shadow 2')">🗑</div>
+        </div>
+      </div>
+      <div class="eq-chips">
+        <div class="chip accent">9×19 мм</div>
+        <div class="chip">Основна</div>
+      </div>
+    </div>
+
+    <div class="eq-card">
+      <div class="eq-card-head">
+        <div class="eq-icon rifle-icon">🔫</div>
+        <div class="eq-meta">
+          <div class="eq-name">Remington 700</div>
+          <div class="eq-sub">.308 Win</div>
+        </div>
+        <div class="eq-actions">
+          <div class="action-btn" onclick="openRifleEdit()">✏️</div>
+          <div class="action-btn del" onclick="openConfirm('Remington 700')">🗑</div>
+        </div>
+      </div>
+      <div class="eq-chips">
+        <div class="chip accent">.308 Win</div>
+        <div class="chip">Снайперська</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="list-area" id="list-bullet" style="display:none">
+    <div class="eq-card">
+      <div class="eq-card-head">
+        <div class="eq-icon bullet-icon">🟡</div>
+        <div class="eq-meta">
+          <div class="eq-name">Hornady ELD-M 208gr</div>
+          <div class="eq-sub">.300 Win Mag · 820 м/с</div>
+        </div>
+        <div class="eq-actions">
+          <div class="action-btn" onclick="openBulletEdit()">✏️</div>
+          <div class="action-btn del" onclick="openConfirm('Hornady ELD-M 208gr')">🗑</div>
+        </div>
+      </div>
+      <div class="eq-chips">
+        <div class="chip accent">.300 Win Mag</div>
+        <div class="chip">208 gr</div>
+        <div class="chip">820 м/с</div>
+      </div>
+    </div>
+
+    <div class="eq-card">
+      <div class="eq-card-head">
+        <div class="eq-icon bullet-icon">🟡</div>
+        <div class="eq-meta">
+          <div class="eq-name">Federal Gold Medal</div>
+          <div class="eq-sub">.308 Win · 175 gr</div>
+        </div>
+        <div class="eq-actions">
+          <div class="action-btn" onclick="openBulletEdit()">✏️</div>
+          <div class="action-btn del" onclick="openConfirm('Federal Gold Medal')">🗑</div>
+        </div>
+      </div>
+      <div class="eq-chips">
+        <div class="chip accent">.308 Win</div>
+        <div class="chip">175 gr</div>
+        <div class="chip">792 м/с</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fab" onclick="openSheetCurrent()">＋</div>
+</div>
+</div>
+
+<!-- Rifle sheet -->
+<div class="overlay-dim" id="dim-rifle" onclick="closeAll()">
+<div class="bottom-sheet" id="sheet-rifle" onclick="event.stopPropagation()">
+  <div class="bs-handle"></div>
+  <div class="bs-header">
+    <div class="bs-title" id="rifle-sheet-title">Нова гвинтівка</div>
+    <div class="bs-subtitle">Заповніть дані спорядження</div>
+  </div>
+  <div class="bs-body">
+    <div class="glass-input-wrap">
+      <div class="glass-label">Назва <span class="req">*</span></div>
+      <input class="glass-input" placeholder="напр. CZ Shadow 2" id="r-name">
+    </div>
+    <div class="glass-input-wrap">
+      <div class="glass-label">Калібр</div>
+      <input class="glass-input" placeholder="напр. 9×19 мм" id="r-cal">
+    </div>
+    <div class="glass-input-wrap">
+      <div class="glass-label">Нотатки</div>
+      <input class="glass-input" placeholder="опціонально" id="r-notes">
+    </div>
+  </div>
+  <div class="bs-footer">
+    <div class="btn-cancel" onclick="closeAll()">Скасувати</div>
+    <div class="btn-save">Зберегти</div>
+  </div>
+</div>
+</div>
+
+<!-- Bullet sheet -->
+<div class="overlay-dim" id="dim-bullet" onclick="closeAll()">
+<div class="bottom-sheet" id="sheet-bullet" onclick="event.stopPropagation()">
+  <div class="bs-handle"></div>
+  <div class="bs-header">
+    <div class="bs-title" id="bullet-sheet-title">Новий набій</div>
+    <div class="bs-subtitle">Балістичні характеристики</div>
+  </div>
+  <div class="bs-body">
+    <div class="glass-input-wrap">
+      <div class="glass-label">Назва <span class="req">*</span></div>
+      <input class="glass-input" placeholder="напр. Hornady ELD-M 208gr" id="b-name">
+    </div>
+    <div class="glass-input-wrap">
+      <div class="glass-label">Калібр</div>
+      <input class="glass-input" placeholder="напр. .300 Win Mag" id="b-cal">
+    </div>
+    <div class="input-row">
+      <div class="glass-input-wrap">
+        <div class="glass-label">Вага, gr</div>
+        <input class="glass-input" placeholder="208" id="b-weight" inputmode="decimal">
+      </div>
+      <div class="glass-input-wrap">
+        <div class="glass-label">Швидкість, м/с</div>
+        <input class="glass-input" placeholder="820" id="b-vel" inputmode="decimal">
+      </div>
+    </div>
+    <div class="glass-input-wrap">
+      <div class="glass-label">Нотатки</div>
+      <input class="glass-input" placeholder="опціонально" id="b-notes">
+    </div>
+  </div>
+  <div class="bs-footer">
+    <div class="btn-cancel" onclick="closeAll()">Скасувати</div>
+    <div class="btn-save">Зберегти</div>
+  </div>
+</div>
+</div>
+
+<!-- Confirm delete -->
+<div class="overlay-dim" id="dim-confirm" onclick="closeAll()">
+<div class="bottom-sheet" id="sheet-confirm" onclick="event.stopPropagation()">
+  <div class="bs-handle"></div>
+  <div class="confirm-body">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">Видалити?</div>
+    <div class="confirm-sub" id="confirm-text"></div>
+  </div>
+  <div class="bs-footer" style="margin-top:16px">
+    <div class="btn-cancel" onclick="closeAll()">Скасувати</div>
+    <div class="btn-delete">Видалити</div>
+  </div>
+</div>
+</div>
+
+<script>
+let currentTab = 'rifle';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-rifle').className = 'tab-btn' + (tab==='rifle' ? ' active' : '');
+  document.getElementById('tab-bullet').className = 'tab-btn' + (tab==='bullet' ? ' active' : '');
+  document.getElementById('list-rifle').style.display = tab==='rifle' ? 'flex' : 'none';
+  document.getElementById('list-bullet').style.display = tab==='bullet' ? 'flex' : 'none';
+}
+
+function openSheet(type) {
+  const dim = document.getElementById('dim-' + type);
+  const sheet = document.getElementById('sheet-' + type);
+  dim.classList.add('show');
+  requestAnimationFrame(() => sheet.classList.add('open'));
+}
+
+function openSheetCurrent() {
+  if (currentTab === 'rifle') {
+    document.getElementById('rifle-sheet-title').textContent = 'Нова гвинтівка';
+    document.getElementById('r-name').value = '';
+    document.getElementById('r-cal').value = '';
+    document.getElementById('r-notes').value = '';
+  } else {
+    document.getElementById('bullet-sheet-title').textContent = 'Новий набій';
+    document.getElementById('b-name').value = '';
+    document.getElementById('b-cal').value = '';
+    document.getElementById('b-weight').value = '';
+    document.getElementById('b-vel').value = '';
+    document.getElementById('b-notes').value = '';
+  }
+  openSheet(currentTab);
+}
+
+function openRifleEdit() {
+  document.getElementById('rifle-sheet-title').textContent = 'Редагувати гвинтівку';
+  document.getElementById('r-name').value = 'CZ Shadow 2';
+  document.getElementById('r-cal').value = '9×19 мм';
+  document.getElementById('r-notes').value = 'Основна';
+  openSheet('rifle');
+}
+
+function openBulletEdit() {
+  document.getElementById('bullet-sheet-title').textContent = 'Редагувати набій';
+  document.getElementById('b-name').value = 'Hornady ELD-M 208gr';
+  document.getElementById('b-cal').value = '.300 Win Mag';
+  document.getElementById('b-weight').value = '208';
+  document.getElementById('b-vel').value = '820';
+  document.getElementById('b-notes').value = '';
+  openSheet('bullet');
+}
+
+function openConfirm(name) {
+  document.getElementById('confirm-text').textContent =
+    `«${name}» буде видалено безповоротно. Пов'язані сесії залишаться.`;
+  openSheet('confirm');
+}
+
+function closeAll() {
+  ['rifle','bullet','confirm'].forEach(t => {
+    const sheet = document.getElementById('sheet-' + t);
+    sheet.classList.remove('open');
+    setTimeout(() => document.getElementById('dim-' + t).classList.remove('show'), 280);
+  });
+}
+</script>

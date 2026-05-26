@@ -120,7 +120,7 @@ shots     (id, session_id, shot_number, detected_at, clip_path,
 | `session_screen.dart` | `SessionScreen` | Активна сесія: камера + оверлей стану + амплітуда |
 | `session_detail_screen.dart` | `SessionDetailScreen` | Перегляд пострілів сесії |
 | `settings_screen.dart` | `SettingsScreen` | Фото-фон (`bg_rifle.webp`) + frosted glass картки. Секції: "До пострілу", "Після пострілу", "Активація", "Камера", "Спорядження". Sticky footer поза ListView. |
-| `equipment_screen.dart` | `EquipmentScreen` | CRUD гвинтівок та набоїв |
+| `equipment_screen.dart` | `EquipmentScreen` | Bottom sheet (викликається через `showEquipmentSheet(context)` з `SettingsScreen`). Той самий темний фон що й camera picker. Таби Гвинтівки/Набої, картки з chips, sticky footer Закрити/Додати. Вкладені шторки для add/edit/delete. |
 | `onboarding_screen.dart` | `OnboardingScreen` | Перший запуск |
 
 **`SessionScreen` внутрішні віджети:**

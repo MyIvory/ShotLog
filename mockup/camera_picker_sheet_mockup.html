@@ -1,0 +1,471 @@
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+.wrap {
+  width: 360px;
+  margin: 0 auto;
+  font-family: -apple-system, 'Roboto', sans-serif;
+}
+
+.sheet {
+  background: linear-gradient(170deg, #1a1410 0%, #100c0a 100%);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: 24px 24px 0 0;
+  overflow: hidden;
+}
+
+.handle {
+  width: 36px; height: 4px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.header {
+  padding: 14px 20px 4px;
+}
+.title { font-size: 17px; font-weight: 600; color: #f0eae5; letter-spacing: -0.2px; }
+.subtitle { font-size: 12px; color: rgba(240,234,229,0.38); margin-top: 3px; line-height: 1.4; }
+
+/* ── Camera cards ── */
+.list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+
+.cam-card {
+  background: rgba(255,255,255,0.055);
+  border: 0.5px solid rgba(255,255,255,0.09);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.cam-card.selected {
+  border-color: rgba(232,119,34,0.55);
+  background: rgba(232,119,34,0.07);
+}
+
+.cam-card.auto-card.selected {
+  border-color: rgba(90,143,184,0.55);
+  background: rgba(90,143,184,0.07);
+}
+
+/* Card header row */
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 10px;
+}
+
+.lens-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.lens-icon.amber { background: rgba(176,80,16,0.7); }
+.lens-icon.blue  { background: rgba(42,95,136,0.7); }
+.lens-icon.green { background: rgba(30,112,72,0.7); }
+
+/* Lens aperture rings */
+.lens-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.35);
+}
+
+.card-meta { flex: 1; min-width: 0; }
+.cam-name { font-size: 15px; font-weight: 600; color: #f0eae5; }
+.cam-sub { font-size: 12px; color: rgba(240,234,229,0.42); margin-top: 2px; }
+
+.sel-indicator {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.sel-indicator.on {
+  background: #E87722;
+  border-color: #E87722;
+}
+.sel-indicator.on-blue {
+  background: #5A8FB8;
+  border-color: #5A8FB8;
+}
+.checkmark { display: none; font-size: 12px; color: #fff; font-weight: 700; }
+.sel-indicator.on .checkmark,
+.sel-indicator.on-blue .checkmark { display: block; }
+
+/* Zoom range badge row */
+.zoom-badges {
+  display: flex;
+  gap: 6px;
+  padding: 0 14px 10px;
+  align-items: center;
+}
+
+.zoom-badge {
+  background: rgba(255,255,255,0.07);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(240,234,229,0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.zoom-badge.active {
+  background: rgba(232,119,34,0.15);
+  border-color: rgba(232,119,34,0.3);
+  color: #E87722;
+}
+
+.zoom-arrow { font-size: 10px; color: rgba(240,234,229,0.2); }
+
+/* Range slider section */
+.slider-section {
+  padding: 0 14px 14px;
+}
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.slider-label-row span {
+  font-size: 11px;
+  color: rgba(240,234,229,0.35);
+  font-variant-numeric: tabular-nums;
+}
+.slider-label-row span.val {
+  color: #E87722;
+  font-weight: 600;
+}
+
+.range-track-wrap {
+  position: relative;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.range-track {
+  position: absolute;
+  left: 0; right: 0;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+}
+
+.range-fill {
+  position: absolute;
+  height: 4px;
+  background: linear-gradient(90deg, rgba(232,119,34,0.5), #E87722);
+  border-radius: 2px;
+}
+
+.range-thumb {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #E87722;
+  border: 2.5px solid #1a1210;
+  box-shadow: 0 0 0 3px rgba(232,119,34,0.25);
+  transform: translateX(-50%);
+  cursor: ew-resize;
+}
+
+.scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0 0;
+}
+.scale-ticks span {
+  font-size: 10px;
+  color: rgba(240,234,229,0.2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Footer */
+.footer {
+  padding: 4px 16px 28px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn-cancel {
+  flex: 1; padding: 13px; border-radius: 12px;
+  background: rgba(255,255,255,0.07);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  font-size: 14px; font-weight: 500;
+  color: rgba(240,234,229,0.65); text-align: center; cursor: pointer;
+}
+.btn-save {
+  flex: 2; padding: 13px; border-radius: 12px;
+  background: #E87722; border: none;
+  font-size: 14px; font-weight: 600;
+  color: #1a0a00; text-align: center; cursor: pointer;
+  box-shadow: 0 2px 12px rgba(232,119,34,0.3);
+}
+</style>
+
+<div class="wrap">
+<div class="sheet">
+  <div class="handle"></div>
+
+  <div class="header">
+    <div class="title">Камера для запису</div>
+    <div class="subtitle">Оберіть лінзу суміщену з окуляром прицілу</div>
+  </div>
+
+  <div class="list">
+
+    <!-- Auto card -->
+    <div class="cam-card auto-card" id="card-auto" onclick="selectCard('auto')">
+      <div class="card-head">
+        <div class="lens-icon blue" style="position:relative">
+          <div class="lens-ring" style="width:32px;height:32px;top:4px;left:4px"></div>
+          <div class="lens-ring" style="width:22px;height:22px;top:9px;left:9px"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.4);position:absolute;top:15px;left:15px"></div>
+        </div>
+        <div class="card-meta">
+          <div class="cam-name">Авто</div>
+          <div class="cam-sub">Повний діапазон · без обмежень</div>
+        </div>
+        <div class="sel-indicator" id="ind-auto"><span class="checkmark">✓</span></div>
+      </div>
+    </div>
+
+    <!-- Camera 1: wide 13mm -->
+    <div class="cam-card selected" id="card-0" onclick="selectCard('0')">
+      <div class="card-head">
+        <div class="lens-icon amber" style="position:relative">
+          <div class="lens-ring" style="width:32px;height:32px;top:4px;left:4px"></div>
+          <div class="lens-ring" style="width:22px;height:22px;top:9px;left:9px"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.45);position:absolute;top:15px;left:15px"></div>
+        </div>
+        <div class="card-meta">
+          <div class="cam-name">13.0 мм · широкий кут</div>
+          <div class="cam-sub">ID: 1 · фізична лінза</div>
+        </div>
+        <div class="sel-indicator on" id="ind-0"><span class="checkmark">✓</span></div>
+      </div>
+      <div class="zoom-badges">
+        <div class="zoom-badge active" id="zmin-0">1.0×</div>
+        <div class="zoom-arrow">→</div>
+        <div class="zoom-badge active" id="zmax-0">2.0×</div>
+        <div style="flex:1"></div>
+        <div class="zoom-badge" style="font-size:10px;color:rgba(240,234,229,0.3)">діапазон 1–5×</div>
+      </div>
+      <div class="slider-section">
+        <div class="range-track-wrap" id="track-0"
+             onmousedown="startDrag(event,'0')"
+             ontouchstart="startDragTouch(event,'0')">
+          <div class="range-track"></div>
+          <div class="range-fill" id="fill-0" style="left:0%;width:25%"></div>
+          <div class="range-thumb" id="tlo-0" style="left:0%"></div>
+          <div class="range-thumb" id="thi-0" style="left:25%"></div>
+        </div>
+        <div class="scale-ticks">
+          <span>1×</span><span>2×</span><span>3×</span><span>4×</span><span>5×</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Camera 2: main 26mm -->
+    <div class="cam-card" id="card-1" onclick="selectCard('1')">
+      <div class="card-head">
+        <div class="lens-icon amber" style="position:relative">
+          <div class="lens-ring" style="width:32px;height:32px;top:4px;left:4px"></div>
+          <div class="lens-ring" style="width:20px;height:20px;top:10px;left:10px"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.45);position:absolute;top:16px;left:16px"></div>
+        </div>
+        <div class="card-meta">
+          <div class="cam-name">26.0 мм · основний</div>
+          <div class="cam-sub">ID: 0 · фізична лінза</div>
+        </div>
+        <div class="sel-indicator" id="ind-1"><span class="checkmark">✓</span></div>
+      </div>
+      <div class="zoom-badges">
+        <div class="zoom-badge" id="zmin-1">1.0×</div>
+        <div class="zoom-arrow">→</div>
+        <div class="zoom-badge" id="zmax-1">3.5×</div>
+        <div style="flex:1"></div>
+        <div class="zoom-badge" style="font-size:10px;color:rgba(240,234,229,0.3)">діапазон 1–8×</div>
+      </div>
+      <div class="slider-section">
+        <div class="range-track-wrap" id="track-1"
+             onmousedown="startDrag(event,'1')"
+             ontouchstart="startDragTouch(event,'1')">
+          <div class="range-track"></div>
+          <div class="range-fill" id="fill-1" style="left:0%;width:31.25%"></div>
+          <div class="range-thumb" id="tlo-1" style="left:0%"></div>
+          <div class="range-thumb" id="thi-1" style="left:31.25%"></div>
+        </div>
+        <div class="scale-ticks">
+          <span>1×</span><span>2×</span><span>4×</span><span>6×</span><span>8×</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Camera 3: tele 77mm -->
+    <div class="cam-card" id="card-2" onclick="selectCard('2')">
+      <div class="card-head">
+        <div class="lens-icon green" style="position:relative">
+          <div class="lens-ring" style="width:30px;height:30px;top:5px;left:5px"></div>
+          <div class="lens-ring" style="width:18px;height:18px;top:11px;left:11px"></div>
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);position:absolute;top:17px;left:17px"></div>
+        </div>
+        <div class="card-meta">
+          <div class="cam-name">77.0 мм · телефото</div>
+          <div class="cam-sub">ID: 2 · фізична лінза</div>
+        </div>
+        <div class="sel-indicator" id="ind-2"><span class="checkmark">✓</span></div>
+      </div>
+      <div class="zoom-badges">
+        <div class="zoom-badge" id="zmin-2">3.0×</div>
+        <div class="zoom-arrow">→</div>
+        <div class="zoom-badge" id="zmax-2">7.0×</div>
+        <div style="flex:1"></div>
+        <div class="zoom-badge" style="font-size:10px;color:rgba(240,234,229,0.3)">діапазон 3–15×</div>
+      </div>
+      <div class="slider-section">
+        <div class="range-track-wrap" id="track-2"
+             onmousedown="startDrag(event,'2')"
+             ontouchstart="startDragTouch(event,'2')">
+          <div class="range-track"></div>
+          <div class="range-fill" id="fill-2" style="left:0%;width:28.5%"></div>
+          <div class="range-thumb" id="tlo-2" style="left:0%"></div>
+          <div class="range-thumb" id="thi-2" style="left:28.5%"></div>
+        </div>
+        <div class="scale-ticks">
+          <span>3×</span><span>6×</span><span>9×</span><span>12×</span><span>15×</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="btn-cancel">Скасувати</div>
+    <div class="btn-save">Зберегти</div>
+  </div>
+</div>
+</div>
+
+<script>
+const cameras = {
+  '0': { min: 1.0, max: 5.0,  lo: 1.0, hi: 2.0 },
+  '1': { min: 1.0, max: 8.0,  lo: 1.0, hi: 3.5 },
+  '2': { min: 3.0, max: 15.0, lo: 3.0, hi: 7.0 },
+};
+
+let selected = '0';
+let activeDrag = null; // { id, thumb: 'lo'|'hi' }
+
+function fmt(v) {
+  return v === Math.round(v) ? v.toFixed(1) + '×' : v.toFixed(1) + '×';
+}
+
+function updateSlider(id) {
+  const c = cameras[id];
+  const range = c.max - c.min;
+  const loPct = ((c.lo - c.min) / range * 100).toFixed(2);
+  const hiPct = ((c.hi - c.min) / range * 100).toFixed(2);
+
+  document.getElementById('tlo-' + id).style.left = loPct + '%';
+  document.getElementById('thi-' + id).style.left = hiPct + '%';
+  document.getElementById('fill-' + id).style.left = loPct + '%';
+  document.getElementById('fill-' + id).style.width = (hiPct - loPct) + '%';
+
+  const sel = selected === id;
+  document.getElementById('zmin-' + id).textContent = fmt(c.lo);
+  document.getElementById('zmax-' + id).textContent = fmt(c.hi);
+  document.getElementById('zmin-' + id).className = 'zoom-badge' + (sel ? ' active' : '');
+  document.getElementById('zmax-' + id).className = 'zoom-badge' + (sel ? ' active' : '');
+}
+
+function selectCard(id) {
+  // deselect all
+  ['auto','0','1','2'].forEach(k => {
+    document.getElementById('card-' + k).classList.remove('selected');
+    const ind = document.getElementById('ind-' + k);
+    ind.className = 'sel-indicator';
+  });
+
+  selected = id;
+  document.getElementById('card-' + id).classList.add('selected');
+  const ind = document.getElementById('ind-' + id);
+  if (id === 'auto') {
+    ind.className = 'sel-indicator on-blue';
+  } else {
+    ind.className = 'sel-indicator on';
+    updateSlider(id);
+  }
+  // update zoom badge colors for others
+  ['0','1','2'].forEach(k => { if (k !== id) updateSlider(k); });
+}
+
+function startDrag(e, id) {
+  e.stopPropagation();
+  const track = document.getElementById('track-' + id);
+  const rect = track.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const pct = Math.max(0, Math.min(1, x / rect.width));
+  const c = cameras[id];
+  const val = c.min + pct * (c.max - c.min);
+  const distLo = Math.abs(val - c.lo);
+  const distHi = Math.abs(val - c.hi);
+  activeDrag = { id, thumb: distLo <= distHi ? 'lo' : 'hi', rect };
+  applyDrag(e.clientX);
+}
+
+function startDragTouch(e, id) {
+  e.stopPropagation();
+  const track = document.getElementById('track-' + id);
+  const rect = track.getBoundingClientRect();
+  activeDrag = { id, thumb: null, rect };
+  const x = e.touches[0].clientX - rect.left;
+  const pct = Math.max(0, Math.min(1, x / rect.width));
+  const c = cameras[id];
+  const val = c.min + pct * (c.max - c.min);
+  const distLo = Math.abs(val - c.lo);
+  const distHi = Math.abs(val - c.hi);
+  activeDrag.thumb = distLo <= distHi ? 'lo' : 'hi';
+  applyDrag(e.touches[0].clientX);
+}
+
+function applyDrag(clientX) {
+  if (!activeDrag) return;
+  const { id, thumb, rect } = activeDrag;
+  const c = cameras[id];
+  const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  const val = Math.round((c.min + pct * (c.max - c.min)) * 10) / 10;
+  if (thumb === 'lo') {
+    c.lo = Math.min(val, c.hi - 0.5);
+  } else {
+    c.hi = Math.max(val, c.lo + 0.5);
+  }
+  updateSlider(id);
+}
+
+document.addEventListener('mousemove', e => applyDrag(e.clientX));
+document.addEventListener('mouseup', () => { activeDrag = null; });
+document.addEventListener('touchmove', e => {
+  if (activeDrag) { e.preventDefault(); applyDrag(e.touches[0].clientX); }
+}, { passive: false });
+document.addEventListener('touchend', () => { activeDrag = null; });
+
+// init
+updateSlider('0');
+updateSlider('1');
+updateSlider('2');
+</script>
