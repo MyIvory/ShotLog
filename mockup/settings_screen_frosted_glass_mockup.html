@@ -1,0 +1,444 @@
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: transparent; }
+
+  .phone-frame {
+    width: 360px;
+    margin: 0 auto;
+    border-radius: 36px;
+    overflow: hidden;
+    position: relative;
+    background: #0d0a09;
+    font-family: -apple-system, 'Roboto', sans-serif;
+  }
+
+  .bg-layer {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(232,119,34,0.28) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 60%, rgba(180,60,0,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 50% 90%, rgba(100,20,0,0.25) 0%, transparent 70%);
+    z-index: 0;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    min-height: 780px;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f0ebe5;
+  }
+
+  .appbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px 14px;
+  }
+
+  .back-btn {
+    width: 36px; height: 36px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    color: #f0ebe5;
+    font-size: 18px;
+  }
+
+  .appbar-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #f0ebe5;
+    letter-spacing: -0.2px;
+  }
+
+  .scroll-area {
+    padding: 0 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: rgba(232,119,34,0.85);
+    padding: 4px 4px 2px;
+    margin-bottom: -4px;
+  }
+
+  .glass-card {
+    background: rgba(255,255,255,0.055);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: 18px;
+    padding: 4px 0;
+    overflow: hidden;
+  }
+
+  .glass-row {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .glass-row + .glass-row::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 16px; right: 16px;
+    height: 0.5px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .row-icon {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .icon-amber { background: rgba(232,119,34,0.18); color: #E87722; }
+  .icon-blue  { background: rgba(80,140,255,0.15); color: #7ab4ff; }
+  .icon-green { background: rgba(60,200,100,0.13); color: #6ee0a0; }
+  .icon-red   { background: rgba(220,60,60,0.15);  color: #ff8080; }
+
+  .row-text { flex: 1; min-width: 0; }
+  .row-label {
+    font-size: 14px;
+    color: #f0ebe5;
+    font-weight: 500;
+  }
+  .row-hint {
+    font-size: 11px;
+    color: rgba(240,235,229,0.45);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E87722;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  .chevron {
+    font-size: 14px;
+    color: rgba(240,235,229,0.3);
+    flex-shrink: 0;
+  }
+
+  .slider-row {
+    padding: 10px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+
+  .slider-row + .glass-row::before,
+  .glass-row + .slider-row::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 16px; right: 16px;
+    height: 0.5px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .slider-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .slider-track-wrap {
+    position: relative;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.10);
+    margin: 4px 0 2px;
+  }
+
+  .slider-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, rgba(232,119,34,0.6), #E87722);
+  }
+
+  .slider-thumb {
+    position: absolute;
+    top: 50%;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #E87722;
+    border: 2.5px solid #1a1210;
+    box-shadow: 0 0 0 3px rgba(232,119,34,0.25);
+    transform: translateY(-50%);
+  }
+
+  .slider-minmax {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: rgba(240,235,229,0.28);
+  }
+
+  .seg-wrap {
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .seg-label {
+    font-size: 11px;
+    color: rgba(240,235,229,0.45);
+    letter-spacing: 0.3px;
+  }
+
+  .seg-buttons {
+    display: flex;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .seg-btn {
+    flex: 1;
+    padding: 7px 4px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px;
+    color: rgba(240,235,229,0.45);
+    cursor: pointer;
+  }
+
+  .seg-btn.active {
+    background: rgba(232,119,34,0.18);
+    border: 0.5px solid rgba(232,119,34,0.35);
+    color: #E87722;
+    font-weight: 500;
+  }
+
+  .vu-preview {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 16px;
+    margin: 4px 0 6px;
+  }
+
+  .vu-bar {
+    flex: 1;
+    border-radius: 1px;
+    background: rgba(255,255,255,0.07);
+  }
+
+  .vu-threshold-line {
+    width: 2px;
+    height: 32px;
+    background: #E87722;
+    border-radius: 1px;
+    margin: 0 2px;
+    flex-shrink: 0;
+  }
+
+  .nav-hint {
+    text-align: center;
+    font-size: 10px;
+    color: rgba(240,235,229,0.2);
+    padding: 16px 0 4px;
+    letter-spacing: 0.3px;
+  }
+</style>
+
+<div class="phone-frame">
+  <div class="bg-layer"></div>
+  <div class="content">
+
+    <div class="status-bar">
+      <span>12:45</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px;">
+        <i class="ti ti-wifi" aria-hidden="true"></i>
+        <i class="ti ti-battery-2" aria-hidden="true"></i>
+      </span>
+    </div>
+
+    <div class="appbar">
+      <div class="back-btn"><i class="ti ti-chevron-left" aria-hidden="true"></i></div>
+      <div class="appbar-title">Налаштування</div>
+    </div>
+
+    <div class="scroll-area">
+
+      <div class="section-label">Таймінги</div>
+
+      <div class="glass-card">
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <div class="row-icon icon-amber"><i class="ti ti-player-play" aria-hidden="true"></i></div>
+            <div class="row-text">
+              <div class="row-label">Відлік перед записом</div>
+              <div class="row-hint">Секунди до початку запису</div>
+            </div>
+            <div class="row-value">3 с</div>
+          </div>
+          <div class="slider-track-wrap">
+            <div class="slider-fill" style="width:22%"></div>
+            <div class="slider-thumb" style="left: calc(22% - 9px)"></div>
+          </div>
+          <div class="slider-minmax"><span>1 с</span><span>10 с</span></div>
+        </div>
+
+        <div class="slider-row" style="position:relative">
+          <div style="position:absolute;top:0;left:16px;right:16px;height:0.5px;background:rgba(255,255,255,0.08)"></div>
+          <div class="slider-header">
+            <div class="row-icon icon-amber"><i class="ti ti-clock-pause" aria-hidden="true"></i></div>
+            <div class="row-text">
+              <div class="row-label">Таймаут без пострілу</div>
+              <div class="row-hint">Скасування запису</div>
+            </div>
+            <div class="row-value">30 с</div>
+          </div>
+          <div class="slider-track-wrap">
+            <div class="slider-fill" style="width:40%"></div>
+            <div class="slider-thumb" style="left: calc(40% - 9px)"></div>
+          </div>
+          <div class="slider-minmax"><span>10 с</span><span>60 с</span></div>
+        </div>
+
+        <div class="slider-row" style="position:relative">
+          <div style="position:absolute;top:0;left:16px;right:16px;height:0.5px;background:rgba(255,255,255,0.08)"></div>
+          <div class="slider-header">
+            <div class="row-icon icon-blue"><i class="ti ti-player-record" aria-hidden="true"></i></div>
+            <div class="row-text">
+              <div class="row-label">Post-roll після пострілу</div>
+              <div class="row-hint">Запис після детекції</div>
+            </div>
+            <div class="row-value">3 с</div>
+          </div>
+          <div class="slider-track-wrap">
+            <div class="slider-fill" style="width:40%;background:linear-gradient(90deg,rgba(80,140,255,0.5),#7ab4ff)"></div>
+            <div class="slider-thumb" style="left:calc(40% - 9px);background:#7ab4ff;box-shadow:0 0 0 3px rgba(80,140,255,0.25)"></div>
+          </div>
+          <div class="slider-minmax"><span>1 с</span><span>10 с</span></div>
+        </div>
+
+        <div class="slider-row" style="position:relative">
+          <div style="position:absolute;top:0;left:16px;right:16px;height:0.5px;background:rgba(255,255,255,0.08)"></div>
+          <div class="slider-header">
+            <div class="row-icon icon-blue"><i class="ti ti-rewind-backward-5" aria-hidden="true"></i></div>
+            <div class="row-text">
+              <div class="row-label">Pre-roll при перегляді</div>
+              <div class="row-hint">Відтворення до пострілу</div>
+            </div>
+            <div class="row-value">2 с</div>
+          </div>
+          <div class="slider-track-wrap">
+            <div class="slider-fill" style="width:40%;background:linear-gradient(90deg,rgba(80,140,255,0.5),#7ab4ff)"></div>
+            <div class="slider-thumb" style="left:calc(40% - 9px);background:#7ab4ff;box-shadow:0 0 0 3px rgba(80,140,255,0.25)"></div>
+          </div>
+          <div class="slider-minmax"><span>0 с</span><span>5 с</span></div>
+        </div>
+
+      </div>
+
+      <div class="section-label">Запуск запису</div>
+
+      <div class="glass-card">
+        <div class="seg-wrap">
+          <div class="seg-label">Режим тригера</div>
+          <div class="seg-buttons">
+            <div class="seg-btn active">
+              <i class="ti ti-hand-click" aria-hidden="true" style="font-size:14px"></i>
+              Кнопка
+            </div>
+            <div class="seg-btn">
+              <i class="ti ti-bluetooth" aria-hidden="true" style="font-size:14px"></i>
+              Bluetooth
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Детекція пострілу</div>
+
+      <div class="glass-card">
+        <div class="glass-row">
+          <div class="row-icon icon-green"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+          <div class="row-text">
+            <div class="row-label">Поріг гучності</div>
+            <div class="row-hint">Натисніть для налаштування</div>
+          </div>
+          <div class="row-value">−20 dBFS</div>
+          <div class="chevron"><i class="ti ti-chevron-right" aria-hidden="true"></i></div>
+        </div>
+
+        <div class="vu-preview">
+          <div class="vu-bar" style="height:8px;background:rgba(110,224,160,0.4)"></div>
+          <div class="vu-bar" style="height:14px;background:rgba(110,224,160,0.5)"></div>
+          <div class="vu-bar" style="height:20px;background:rgba(110,224,160,0.6)"></div>
+          <div class="vu-bar" style="height:24px;background:rgba(110,224,160,0.7)"></div>
+          <div class="vu-bar" style="height:20px;background:rgba(110,224,160,0.6)"></div>
+          <div class="vu-bar" style="height:16px;background:rgba(110,224,160,0.5)"></div>
+          <div class="vu-bar" style="height:10px;background:rgba(110,224,160,0.35)"></div>
+          <div class="vu-threshold-line"></div>
+          <div class="vu-bar" style="height:6px;background:rgba(232,119,34,0.3)"></div>
+          <div class="vu-bar" style="height:8px;background:rgba(232,119,34,0.2)"></div>
+          <div class="vu-bar" style="height:5px;background:rgba(232,119,34,0.15)"></div>
+          <div class="vu-bar" style="height:3px;background:rgba(255,80,80,0.2)"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Спорядження</div>
+
+      <div class="glass-card">
+        <div class="glass-row">
+          <div class="row-icon icon-amber"><i class="ti ti-gun" aria-hidden="true"></i></div>
+          <div class="row-text">
+            <div class="row-label">Гвинтівки</div>
+            <div class="row-hint">Керування, 2 одиниці</div>
+          </div>
+          <div class="chevron"><i class="ti ti-chevron-right" aria-hidden="true"></i></div>
+        </div>
+        <div class="glass-row">
+          <div class="row-icon icon-red"><i class="ti ti-circles" aria-hidden="true"></i></div>
+          <div class="row-text">
+            <div class="row-label">Набої</div>
+            <div class="row-hint">Керування, 3 позиції</div>
+          </div>
+          <div class="chevron"><i class="ti ti-chevron-right" aria-hidden="true"></i></div>
+        </div>
+      </div>
+
+      <div class="nav-hint">Зміни зберігаються автоматично</div>
+
+    </div>
+  </div>
+</div>

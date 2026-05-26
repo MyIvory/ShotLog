@@ -119,7 +119,7 @@ shots     (id, session_id, shot_number, detected_at, clip_path,
 | `new_session_sheet.dart` | `NewSessionSheet` | Bottom sheet вибору гвинтівки/набою/дистанції |
 | `session_screen.dart` | `SessionScreen` | Активна сесія: камера + оверлей стану + амплітуда |
 | `session_detail_screen.dart` | `SessionDetailScreen` | Перегляд пострілів сесії |
-| `settings_screen.dart` | `SettingsScreen` | Таймінги, тригер, поріг, камера (вибір об'єктива), спорядження |
+| `settings_screen.dart` | `SettingsScreen` | Фото-фон (`bg_rifle.webp`) + frosted glass картки. Секції: "До пострілу", "Після пострілу", "Активація", "Камера", "Спорядження". Sticky footer поза ListView. |
 | `equipment_screen.dart` | `EquipmentScreen` | CRUD гвинтівок та набоїв |
 | `onboarding_screen.dart` | `OnboardingScreen` | Перший запуск |
 
@@ -139,7 +139,7 @@ shots     (id, session_id, shot_number, detected_at, clip_path,
 | `threshold_picker.dart` | `_DbLabels` | Підписи dB на шкалі |
 | `audio_level_bar.dart` | `AudioLevelBar` | Компактна горизонтальна шкала 4 px (зелений/червоний + помаранчева лінія порогу) |
 | `session_state_overlay.dart` | `SessionStateOverlay` | Оверлей поверх камери: стан, відлік, кнопки |
-| `video_player_overlay.dart` | `VideoPlayerOverlay` — | Вбудований плеєр кліпу |
+| `video_player_overlay.dart` | `VideoPlayerOverlay` | Full-screen frosted glass плеєр: `FittedBox.cover` для відео, прогрес-бар у `BackdropFilter`-контейнері, маркер пострілу на треку, кнопки у `_GlassBox`, `_SpeedChip` (0.5×/1×/2×), `immersiveSticky` |
 | `shot_list_item.dart` | `ShotListItem` | Елемент списку пострілу з мініатюрою |
 
 **`threshold_picker.dart` нюанс:**
@@ -168,6 +168,16 @@ BluetoothButtonService ──onButtonPressed──► SessionProvider
                                          ├── ShotRepository.insert()
                                          └── SessionRepository.update()
 ```
+
+---
+
+## Активи (`assets/`)
+
+| Шлях | Призначення |
+|---|---|
+| `assets/icons/active/` | Іконки навігаційної панелі (активний стан) |
+| `assets/icons/inactive/` | Іконки навігаційної панелі (неактивний стан) |
+| `assets/images/bg_rifle.webp` | Фото гвинтівки — фон екрану налаштувань |
 
 ---
 

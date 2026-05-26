@@ -6,6 +6,26 @@ import '../services/settings_service.dart';
 import '../widgets/threshold_picker.dart';
 import 'equipment_screen.dart';
 
+// ── Color constants ───────────────────────────────────────────────────────────
+
+const _kAccent    = Color(0xFFE87722);
+const _kBlue      = Color(0xFF5A8FB8);
+const _kGreen     = Color(0xFF6EE0A0);
+const _kText      = Color(0xFFF0EAE5);
+const _kHint      = Color(0x73F0EAE5);   // 45 %
+const _kLabel     = Color(0x99F0EAE5);   // 60 % — section labels
+const _kBadgeIcon = Color(0xFFF0EAE5);   // icon badge icons
+const _kSurface   = Color(0x26FFFFFF);
+const _kBorder    = Color(0x28FFFFFF);
+const _kDiv       = Color(0x1EFFFFFF);
+const _kBadgeBdr  = Color(0x33FFFFFF);   // 1px badge border
+
+const _kBgAmber   = Color(0xCCB05010);
+const _kBgBlue    = Color(0xCC2A5F88);
+const _kBgGreen   = Color(0xCC1E7048);
+
+// ── Screen ────────────────────────────────────────────────────────────────────
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -34,120 +54,170 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  void _onChange(AppSettings newSettings) {
-    setState(() => _s = newSettings);
+  void _onChange(AppSettings v) {
+    setState(() => _s = v);
     _saveDebounce?.cancel();
-    _saveDebounce = Timer(const Duration(milliseconds: 600), () async {
-      await _svc.save(_s);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Збережено'),
-            duration: Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    });
+    _saveDebounce = Timer(
+      const Duration(milliseconds: 600),
+      () => _svc.save(_s),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF130E0C),
+        body: Center(child: CircularProgressIndicator(color: _kAccent)),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Налаштування')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: Colors.transparent,
+      body: Stack(
         children: [
-          _Section('Таймінги'),
-          _IntSlider(
-            label: 'Відлік перед записом',
-            value: _s.countdownSec,
-            min: 1,
-            max: 10,
-            unit: 'с',
-            icon: Icons.timer_outlined,
-            onChanged: (v) => _onChange(_s.copyWith(countdownSec: v)),
-          ),
-          _IntSlider(
-            label: 'Таймаут без пострілу',
-            value: _s.timeoutSec,
-            min: 10,
-            max: 60,
-            unit: 'с',
-            icon: Icons.timer_outlined,
-            onChanged: (v) => _onChange(_s.copyWith(timeoutSec: v)),
-          ),
-          _IntSlider(
-            label: 'Запис після пострілу (post-roll)',
-            value: _s.postRollSec,
-            min: 1,
-            max: 10,
-            unit: 'с',
-            icon: Icons.timer_outlined,
-            helpText: 'Скільки секунд відео записується після пострілу',
-            onChanged: (v) => _onChange(_s.copyWith(postRollSec: v)),
-          ),
-          _IntSlider(
-            label: 'Перегляд до пострілу (pre-roll)',
-            value: _s.preRollSec,
-            min: 0,
-            max: 5,
-            unit: 'с',
-            icon: Icons.timer_outlined,
-            helpText: 'З якого моменту розпочинати відтворення при перегляді кліпу',
-            onChanged: (v) => _onChange(_s.copyWith(preRollSec: v)),
-          ),
-          const Divider(height: 32),
-          _Section('Запуск запису'),
-          _TriggerModeTile(
-            value: _s.triggerMode,
-            onChanged: (v) => _onChange(_s.copyWith(triggerMode: v)),
-          ),
-          const Divider(height: 32),
-          _Section('Детекція пострілу'),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-            leading: const Icon(Icons.graphic_eq),
-            title: const Text('Поріг гучності'),
-            subtitle: Text(
-              '${_s.detectionDbfs.toStringAsFixed(0)} dBFS — натисніть для налаштування',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 12,
-              ),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              final result = await showThresholdPicker(context, _s.detectionDbfs);
-              if (result != null) {
-                _onChange(_s.copyWith(detectionDbfs: result));
-              }
-            },
-          ),
-          const Divider(height: 32),
-          _Section('Камера'),
-          _CameraTile(
-            selectedId: _s.selectedCameraId,
-            zoomMin: _s.cameraZoomMin,
-            zoomMax: _s.cameraZoomMax,
-            onChanged: (id, zoomMin, zoomMax) => _onChange(_s.copyWith(
-              selectedCameraId: id,
-              cameraZoomMin: zoomMin,
-              cameraZoomMax: zoomMax,
-            )),
-          ),
-          const Divider(height: 32),
-          _Section('Спорядження'),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-            leading: const Icon(Icons.inventory_2_outlined),
-            title: const Text('Гвинтівки та набої'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EquipmentScreen()),
+          const _PhotoBg(),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 2),
+                  child: const Text(
+                    'Налаштування',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: _kText,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    children: [
+
+                      // ── До пострілу ───────────────────────────────
+                      const _SectionLabel('До пострілу'),
+                      _GlassCard(children: [
+                        _SliderRow(
+                          label: 'Відлік перед записом',
+                          hint: 'Час до початку запису',
+                          value: _s.countdownSec,
+                          min: 1, max: 10, unit: 'с',
+                          icon: Icons.access_time_outlined,
+                          iconBg: _kBgAmber,
+                          gradColors: const [Color(0xFFFFB347), _kAccent],
+                          onChanged: (v) => _onChange(_s.copyWith(countdownSec: v)),
+                        ),
+                        _SliderRow(
+                          label: 'Запис до пострілу',
+                          hint: 'Час кліпу до пострілу',
+                          value: _s.preRollSec,
+                          min: 0, max: 5, unit: 'с',
+                          icon: Icons.fast_rewind_outlined,
+                          iconBg: _kBgBlue,
+                          gradColors: const [Color(0xFF3A6F98), _kBlue],
+                          onChanged: (v) => _onChange(_s.copyWith(preRollSec: v)),
+                        ),
+                      ]),
+
+                      // ── Після пострілу ────────────────────────────
+                      const _SectionLabel('Після пострілу'),
+                      _GlassCard(children: [
+                        _SliderRow(
+                          label: 'Таймаут без пострілу',
+                          hint: 'Скасування запису',
+                          value: _s.timeoutSec,
+                          min: 10, max: 60, unit: 'с',
+                          icon: Icons.timer_off_outlined,
+                          iconBg: _kBgAmber,
+                          gradColors: const [Color(0xFFFFB347), _kAccent],
+                          onChanged: (v) => _onChange(_s.copyWith(timeoutSec: v)),
+                        ),
+                        _SliderRow(
+                          label: 'Запис після пострілу',
+                          hint: 'Час кліпу після пострілу',
+                          value: _s.postRollSec,
+                          min: 1, max: 10, unit: 'с',
+                          icon: Icons.fast_forward_outlined,
+                          iconBg: _kBgBlue,
+                          gradColors: const [Color(0xFF3A6F98), _kBlue],
+                          onChanged: (v) => _onChange(_s.copyWith(postRollSec: v)),
+                        ),
+                      ]),
+
+                      // ── Активація ─────────────────────────────────
+                      const _SectionLabel('Активація'),
+                      _GlassCard(children: [
+                        _TriggerRow(
+                          value: _s.triggerMode,
+                          onChanged: (v) => _onChange(_s.copyWith(triggerMode: v)),
+                        ),
+                        _GlassRow(
+                          icon: const _IconBadge(
+                              Icons.graphic_eq, _kBgAmber),
+                          label: 'Поріг гучності',
+                          hint: 'Натисніть для налаштування',
+                          value: '${_s.detectionDbfs.toStringAsFixed(0)} dBFS',
+                          onTap: () async {
+                            final r = await showThresholdPicker(
+                                context, _s.detectionDbfs);
+                            if (r != null) _onChange(_s.copyWith(detectionDbfs: r));
+                          },
+                        ),
+                      ]),
+
+                      // ── Камера ─────────────────────────────────────
+                      const _SectionLabel('Камера'),
+                      _GlassCard(children: [
+                        _CameraGlassRow(
+                          selectedId: _s.selectedCameraId,
+                          zoomMin: _s.cameraZoomMin,
+                          zoomMax: _s.cameraZoomMax,
+                          onChanged: (id, zMin, zMax) => _onChange(_s.copyWith(
+                            selectedCameraId: id,
+                            cameraZoomMin: zMin,
+                            cameraZoomMax: zMax,
+                          )),
+                        ),
+                      ]),
+
+                      // ── Спорядження ────────────────────────────────
+                      const _SectionLabel('Спорядження'),
+                      _GlassCard(children: [
+                        _GlassRow(
+                          icon: const _IconBadge(
+                              Icons.inventory_2_outlined, _kBgAmber),
+                          label: 'Гвинтівки та набої',
+                          hint: 'Керування спорядженням',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const EquipmentScreen()),
+                          ),
+                        ),
+                      ]),
+                    ],
+                  ),
+                ),
+
+                // ── Sticky footer ──────────────────────────────────
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  child: Center(
+                    child: Text(
+                      'Зміни зберігаються автоматично',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0x40F0EAE5),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -156,137 +226,508 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class _Section extends StatelessWidget {
-  final String title;
-  const _Section(this.title);
+// ── Photo background ──────────────────────────────────────────────────────────
+
+class _PhotoBg extends StatelessWidget {
+  const _PhotoBg();
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8, top: 4),
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/images/bg_rifle.webp',
+            fit: BoxFit.cover,
+            alignment: const Alignment(0.2, -1.0),
+          ),
+          // Flat dark overlay
+          Container(color: const Color(0xB8120E0C)),
+          // Gradient: clear at top → nearly opaque at bottom
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xE60C0A08)],
+                stops: [0.25, 1.0],
               ),
-        ),
-      );
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _TriggerModeTile extends StatelessWidget {
-  final TriggerMode value;
-  final ValueChanged<TriggerMode> onChanged;
+// ── Section label ─────────────────────────────────────────────────────────────
 
-  const _TriggerModeTile({required this.value, required this.onChanged});
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: SegmentedButton<TriggerMode>(
-        style: SegmentedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+      padding: const EdgeInsets.only(top: 20, bottom: 6, left: 4),
+      child: Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.0,
+          color: _kLabel,
         ),
-        segments: const [
-          ButtonSegment(
-            value: TriggerMode.button,
-            label: Text('Кнопка в застосунку'),
-            icon: Icon(Icons.touch_app),
-          ),
-          ButtonSegment(
-            value: TriggerMode.bluetooth,
-            label: Text('Bluetooth брелок'),
-            icon: Icon(Icons.bluetooth),
-          ),
-        ],
-        selected: {value},
-        onSelectionChanged: (s) => onChanged(s.first),
       ),
     );
   }
 }
 
-class _IntSlider extends StatelessWidget {
+// ── Glass card ────────────────────────────────────────────────────────────────
+
+class _GlassCard extends StatelessWidget {
+  final List<Widget> children;
+  const _GlassCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _kSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kBorder, width: 0.5),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (int i = 0; i < children.length; i++) ...[
+              if (i > 0)
+                Container(
+                  height: 0.5,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  color: _kDiv,
+                ),
+              children[i],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Icon badge ────────────────────────────────────────────────────────────────
+
+class _IconBadge extends StatelessWidget {
+  final IconData icon;
+  final Color bg;
+  const _IconBadge(this.icon, this.bg);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _kBadgeBdr, width: 1),
+      ),
+      child: Icon(icon, color: _kBadgeIcon, size: 17),
+    );
+  }
+}
+
+// ── Glass row ─────────────────────────────────────────────────────────────────
+
+class _GlassRow extends StatelessWidget {
+  final Widget icon;
   final String label;
+  final String? hint;
+  final String? value;
+  final VoidCallback? onTap;
+  const _GlassRow({
+    required this.icon,
+    required this.label,
+    this.hint,
+    this.value,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            icon,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: _kText)),
+                  if (hint != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(hint!,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 13, color: _kHint)),
+                    ),
+                ],
+              ),
+            ),
+            if (value != null) ...[
+              const SizedBox(width: 8),
+              Text(value!,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _kText)),
+            ],
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right,
+                  color: Color(0x4DF0EAE5), size: 18),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Slider row ────────────────────────────────────────────────────────────────
+
+class _SliderRow extends StatelessWidget {
+  final String label;
+  final String hint;
   final int value;
-  final int min;
-  final int max;
+  final int min, max;
   final String unit;
-  final String? helpText;
-  final IconData? icon;
+  final IconData icon;
+  final Color iconBg;
+  final List<Color> gradColors;
   final ValueChanged<int> onChanged;
 
-  const _IntSlider({
+  const _SliderRow({
     required this.label,
+    required this.hint,
     required this.value,
     required this.min,
     required this.max,
     required this.unit,
-    this.helpText,
-    this.icon,
+    required this.icon,
+    required this.iconBg,
+    required this.gradColors,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (icon != null) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 12, right: 16),
-            child: Icon(icon, color: cs.onSurfaceVariant, size: 24),
-          ),
-        ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
+        children: [
+          Row(
             children: [
-              Text('$label: $value $unit', style: tt.bodyMedium),
-              if (helpText != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    helpText!,
-                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
+              _IconBadge(icon, iconBg),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: _kText)),
+                    Text(hint,
+                        style: const TextStyle(
+                            fontSize: 13, color: _kHint)),
+                  ],
                 ),
-              Slider(
-                value: value.toDouble(),
-                min: min.toDouble(),
-                max: max.toDouble(),
-                divisions: max - min,
-                label: '$value $unit',
-                onChanged: (v) => onChanged(v.round()),
+              ),
+              Text(
+                '$value $unit',
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _kText),
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 10),
+          _GradientSlider(
+            value: value.toDouble(),
+            min: min.toDouble(),
+            max: max.toDouble(),
+            colors: gradColors,
+            onChanged: (v) => onChanged(v.round()),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$min $unit',
+                  style: const TextStyle(
+                      fontSize: 10, color: _kHint)),
+              Text('$max $unit',
+                  style: const TextStyle(
+                      fontSize: 10, color: _kHint)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-typedef _CameraSelectedCallback = void Function(String id, double zoomMin, double zoomMax);
+// ── Gradient slider ───────────────────────────────────────────────────────────
 
-class _CameraTile extends StatelessWidget {
+class _GradientSlider extends StatelessWidget {
+  final double value, min, max;
+  final List<Color> colors;
+  final ValueChanged<double> onChanged;
+
+  const _GradientSlider({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.colors,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (_, constraints) {
+      final w = constraints.maxWidth;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragUpdate: (d) {
+          final f = (d.localPosition.dx / w).clamp(0.0, 1.0);
+          onChanged(min + f * (max - min));
+        },
+        onTapDown: (d) {
+          final f = (d.localPosition.dx / w).clamp(0.0, 1.0);
+          onChanged(min + f * (max - min));
+        },
+        child: SizedBox(
+          height: 44,
+          width: w,
+          child: CustomPaint(
+            painter: _SliderPainter(
+              frac: max > min
+                  ? ((value - min) / (max - min)).clamp(0.0, 1.0)
+                  : 0.0,
+              colors: colors,
+            ),
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class _SliderPainter extends CustomPainter {
+  final double frac;
+  final List<Color> colors;
+  const _SliderPainter({required this.frac, required this.colors});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cy = size.height / 2;
+    const trackH = 6.0;
+    const r = Radius.circular(2);
+
+    canvas.drawRRect(
+      RRect.fromLTRBR(0, cy - trackH / 2, size.width, cy + trackH / 2, r),
+      Paint()..color = const Color(0x1AFFFFFF),
+    );
+
+    final fillW = size.width * frac;
+    if (fillW > 0) {
+      final fillRect =
+          Rect.fromLTRB(0, cy - trackH / 2, fillW, cy + trackH / 2);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(fillRect, r),
+        Paint()
+          ..shader = LinearGradient(colors: colors)
+              .createShader(Rect.fromLTWH(0, 0, size.width, trackH)),
+      );
+    }
+
+    // Clamp thumb so it never clips at edges
+    final tx = (size.width * frac).clamp(9.0, size.width - 9.0);
+
+    canvas.drawCircle(
+        Offset(tx, cy), 13, Paint()..color = colors.last.withOpacity(0.22));
+    canvas.drawCircle(Offset(tx, cy), 9, Paint()..color = colors.last);
+    canvas.drawCircle(
+      Offset(tx, cy),
+      6.5,
+      Paint()
+        ..color = const Color(0xFF1A1210)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SliderPainter old) =>
+      old.frac != frac || old.colors != colors;
+}
+
+// ── Trigger row ───────────────────────────────────────────────────────────────
+
+class _TriggerRow extends StatelessWidget {
+  final TriggerMode value;
+  final ValueChanged<TriggerMode> onChanged;
+  const _TriggerRow({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _IconBadge(Icons.settings_input_component, _kBgAmber),
+              const SizedBox(width: 12),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Режим тригера',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _kText)),
+                  SizedBox(height: 2),
+                  Text('Спосіб запуску відліку',
+                      style: TextStyle(fontSize: 13, color: _kHint)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0x26FFFFFF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0x33FFFFFF), width: 0.5),
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
+                    _SegBtn(
+                      label: 'Кнопка',
+                      icon: Icons.touch_app_outlined,
+                      active: value == TriggerMode.button,
+                      onTap: () => onChanged(TriggerMode.button),
+                      radius: const BorderRadius.only(
+                        topLeft: Radius.circular(11),
+                        bottomLeft: Radius.circular(11),
+                      ),
+                    ),
+                    Container(width: 0.5, color: const Color(0x33FFFFFF)),
+                    _SegBtn(
+                      label: 'Bluetooth',
+                      icon: Icons.bluetooth,
+                      active: value == TriggerMode.bluetooth,
+                      onTap: () => onChanged(TriggerMode.bluetooth),
+                      radius: const BorderRadius.only(
+                        topRight: Radius.circular(11),
+                        bottomRight: Radius.circular(11),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SegBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool active;
+  final VoidCallback onTap;
+  final BorderRadius radius;
+  const _SegBtn({
+    required this.label,
+    required this.icon,
+    required this.active,
+    required this.onTap,
+    required this.radius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xCCB05010) : Colors.transparent,
+            borderRadius: radius,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 14, color: _kText),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _kText,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Camera glass row ──────────────────────────────────────────────────────────
+
+typedef _CameraSelectedCallback = void Function(
+    String id, double zoomMin, double zoomMax);
+
+class _CameraGlassRow extends StatelessWidget {
   final String selectedId;
-  final double zoomMin;
-  final double zoomMax;
+  final double zoomMin, zoomMax;
   final _CameraSelectedCallback onChanged;
 
-  const _CameraTile({
+  const _CameraGlassRow({
     required this.selectedId,
     required this.zoomMin,
     required this.zoomMax,
     required this.onChanged,
   });
 
-  String _zoomLabel(double z) =>
+  String _zl(double z) =>
       z == z.roundToDouble() ? '${z.toInt()}×' : '${z.toStringAsFixed(1)}×';
 
   void _showPicker(BuildContext context) {
@@ -302,34 +743,28 @@ class _CameraTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    String subtitle;
-    if (selectedId.isEmpty) {
-      subtitle = 'Автоматично — повний діапазон зуму';
-    } else if (zoomMin > 0 && zoomMax > 0) {
-      subtitle = 'ID: $selectedId · ${_zoomLabel(zoomMin)} – ${_zoomLabel(zoomMax)}';
-    } else {
-      subtitle = 'ID: $selectedId';
-    }
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      leading: const Icon(Icons.camera_alt_outlined),
-      title: const Text('Камера для запису'),
-      subtitle: Text(subtitle, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
-      trailing: const Icon(Icons.chevron_right),
+    final hint = selectedId.isEmpty
+        ? 'Автоматично — повний діапазон зуму'
+        : (zoomMin > 0 && zoomMax > 0)
+            ? 'ID: $selectedId · ${_zl(zoomMin)} – ${_zl(zoomMax)}'
+            : 'ID: $selectedId';
+
+    return _GlassRow(
+      icon: const _IconBadge(Icons.camera_alt_outlined, _kBgBlue),
+      label: 'Камера для запису',
+      hint: hint,
       onTap: () => _showPicker(context),
     );
   }
 }
 
+// ── Camera picker sheet ───────────────────────────────────────────────────────
+
 class _CameraPickerSheet extends StatefulWidget {
   final String selectedId;
   final _CameraSelectedCallback onChanged;
-
-  const _CameraPickerSheet({
-    required this.selectedId,
-    required this.onChanged,
-  });
+  const _CameraPickerSheet(
+      {required this.selectedId, required this.onChanged});
 
   @override
   State<_CameraPickerSheet> createState() => _CameraPickerSheetState();
@@ -340,7 +775,6 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
   List<PhysicalCameraInfo>? _cameras;
   String? _error;
   String _selId = '';
-  // Per-camera adjusted ranges — each bounded by that camera's own auto range.
   Map<String, (double, double)> _adjustedRanges = {};
 
   @override
@@ -380,7 +814,8 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
 
   Future<void> _apply() async {
     for (final entry in _adjustedRanges.entries) {
-      await _svc.saveCameraZoomRange(entry.key, entry.value.$1, entry.value.$2);
+      await _svc.saveCameraZoomRange(
+          entry.key, entry.value.$1, entry.value.$2);
     }
     final range = _selId.isNotEmpty ? _adjustedRanges[_selId] : null;
     widget.onChanged(_selId, range?.$1 ?? 0.0, range?.$2 ?? 0.0);
@@ -413,17 +848,16 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ),
-
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text('Помилка: $_error', style: TextStyle(color: cs.error)),
+                child: Text('Помилка: $_error',
+                    style: TextStyle(color: cs.error)),
               )
             else if (_cameras == null)
               const SizedBox(
-                height: 80,
-                child: Center(child: CircularProgressIndicator()),
-              )
+                  height: 80,
+                  child: Center(child: CircularProgressIndicator()))
             else ...[
               ListTile(
                 leading: Radio<String>(
@@ -431,20 +865,18 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
                   groupValue: _selId,
                   onChanged: (v) => setState(() => _selId = v ?? ''),
                 ),
-                title: Text('Авто (за замовчуванням)', style: tt.bodyMedium),
-                subtitle: Text(
-                  'Повний діапазон, без обмежень',
-                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                ),
+                title: Text('Авто (за замовчуванням)',
+                    style: tt.bodyMedium),
+                subtitle: Text('Повний діапазон, без обмежень',
+                    style: tt.bodySmall
+                        ?.copyWith(color: cs.onSurfaceVariant)),
                 onTap: () => setState(() => _selId = ''),
               ),
               const Divider(height: 1),
-
               for (final cam in _cameras!) ...[
                 _buildCameraRow(cam, tt, cs),
                 const Divider(height: 1),
               ],
-
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: SizedBox(
@@ -465,7 +897,8 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
     );
   }
 
-  Widget _buildCameraRow(PhysicalCameraInfo cam, TextTheme tt, ColorScheme cs) {
+  Widget _buildCameraRow(
+      PhysicalCameraInfo cam, TextTheme tt, ColorScheme cs) {
     final range = _adjustedRanges[cam.id];
     final hasSlider = cam.zoomMin != null &&
         cam.zoomMax != null &&
@@ -490,10 +923,9 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
             style: tt.bodyMedium,
           ),
           subtitle: hasSlider
-              ? Text(
-                  '${_zl(lo)} – ${_zl(hi)}',
-                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                )
+              ? Text('${_zl(lo)} – ${_zl(hi)}',
+                  style: tt.bodySmall
+                      ?.copyWith(color: cs.onSurfaceVariant))
               : null,
           onTap: () => setState(() => _selId = cam.id),
         ),
@@ -514,11 +946,10 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
   }
 }
 
+// ── Zoom range slider ─────────────────────────────────────────────────────────
+
 class _ZoomRangeSlider extends StatelessWidget {
-  final double min;
-  final double max;
-  final double zoomMin;
-  final double zoomMax;
+  final double min, max, zoomMin, zoomMax;
   final void Function(double min, double max) onChanged;
 
   const _ZoomRangeSlider({
@@ -567,8 +998,12 @@ class _ZoomRangeSlider extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_zl(min), style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-              Text(_zl(max), style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+              Text(_zl(min),
+                  style: tt.bodySmall
+                      ?.copyWith(color: cs.onSurfaceVariant)),
+              Text(_zl(max),
+                  style: tt.bodySmall
+                      ?.copyWith(color: cs.onSurfaceVariant)),
             ],
           ),
         ],
