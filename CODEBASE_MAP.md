@@ -114,13 +114,13 @@ shots     (id, session_id, shot_number, detected_at, clip_path,
 | Файл | Клас | Навігація |
 |---|---|---|
 | `splash_screen.dart` | `SplashScreen` | Стартовий екран → `MainShell` |
-| `main_shell.dart` | `MainShell` | `NavigationBar` з 3 вкладками |
-| `home_screen.dart` | `HomeScreen` | Список сесій, кнопка нової сесії |
+| `main_shell.dart` | `MainShell` | `NavigationBar` з 3 вкладками: Сесії, Галерея, Статистика. Налаштування відкриваються через `Navigator.push` з шестеренки на HomeScreen. |
+| `home_screen.dart` | `HomeScreen` | Sticky header (ShotLog + шестеренка), список сесій з rich-картками, FAB "Нова сесія". Фон: `bg_range.png` + темний градієнт. |
 | `new_session_sheet.dart` | `NewSessionSheet` | Bottom sheet вибору гвинтівки/набою/дистанції |
 | `session_screen.dart` | `SessionScreen` | Активна сесія: камера + оверлей стану + амплітуда |
 | `session_detail_screen.dart` | `SessionDetailScreen` | Перегляд пострілів сесії |
-| `settings_screen.dart` | `SettingsScreen` | Фото-фон (`bg_rifle.webp`) + frosted glass картки. Секції: "До пострілу", "Після пострілу", "Активація", "Камера", "Спорядження". Sticky footer поза ListView. |
-| `equipment_screen.dart` | `EquipmentScreen` | Bottom sheet (викликається через `showEquipmentSheet(context)` з `SettingsScreen`). Той самий темний фон що й camera picker. Таби Гвинтівки/Набої, картки з chips, sticky footer Закрити/Додати. Вкладені шторки для add/edit/delete. |
+| `settings_screen.dart` | `SettingsScreen` | Фото-фон (`bg_rifle.webp`) + frosted glass картки. Секції: "До пострілу", "Після пострілу", "Активація", "Камера", "Спорядження". Glass header (`Positioned(top:0)`, blur 20, `0x14FFFFFF`), список скролиться під хедер. `_CameraPickerSheet` — bottom sheet з glass header/footer (Stack + `Positioned.fill` scroll, `SizedBox(height: 85% ekrana)`). |
+| `equipment_screen.dart` | `EquipmentScreen` | Bottom sheet (викликається через `showEquipmentSheet(context)` з `SettingsScreen`). Той самий темний фон (`bg_rifle.webp` + overlay). Stack паттерн: `Positioned.fill` IndexedStack (таби Гвинтівки/Набої), `Positioned(top:0)` glass header (handle + заголовок + таб-перемикач), `Positioned(bottom:0)` glass footer (Закрити + Додати). Вкладені шторки для add/edit/delete. |
 | `onboarding_screen.dart` | `OnboardingScreen` | Перший запуск |
 
 **`SessionScreen` внутрішні віджети:**
@@ -178,6 +178,7 @@ BluetoothButtonService ──onButtonPressed──► SessionProvider
 | `assets/icons/active/` | Іконки навігаційної панелі (активний стан) |
 | `assets/icons/inactive/` | Іконки навігаційної панелі (неактивний стан) |
 | `assets/images/bg_rifle.webp` | Фото гвинтівки — фон екрану налаштувань |
+| `assets/images/bg_range.png` | Фото стрільбища — фон HomeScreen |
 
 ---
 
