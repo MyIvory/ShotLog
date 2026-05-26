@@ -158,14 +158,14 @@ class _VideoPlayerOverlayState extends State<VideoPlayerOverlay> {
                       children: [
                         // ── Progress track (frosted glass) ─────────────
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                             child: Container(
                               padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
                               decoration: BoxDecoration(
                                 color: const Color(0x1AFFFFFF),
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: const Color(0x28FFFFFF),
                                   width: 0.8,
