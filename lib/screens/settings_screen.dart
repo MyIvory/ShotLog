@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../models/app_settings.dart';
 import '../services/physical_camera_service.dart';
@@ -70,30 +71,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
 
+    final top = MediaQuery.of(context).padding.top;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           const _PhotoBg(),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 2),
-                  child: const Text(
-                    'Налаштування',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: _kText,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          // ── List (full screen, scrolls under header) ──
+          ListView(
+            padding: EdgeInsets.fromLTRB(16, top + 76 + 8, 16, 16),
                     children: [
 
                       // ── До пострілу ───────────────────────────────
@@ -193,25 +180,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onTap: () => showEquipmentSheet(context),
                         ),
                       ]),
+            ],
+          ),
+          // ── Glass header (floats on top) ──
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0x14FFFFFF),
+                    border: Border(
+                        bottom: BorderSide(color: Color(0x1EFFFFFF), width: 0.5)),
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(height: top),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Налаштування',
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w700,
+                                      color: _kText,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Зміни зберігаються автоматично',
+                                    style: TextStyle(fontSize: 12, color: _kHint),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                width: 36, height: 36,
+                                decoration: BoxDecoration(
+                                  color: const Color(0x1AFFFFFF),
+                                  border: Border.all(
+                                      color: const Color(0x1EFFFFFF), width: 0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.west, color: _kText, size: 18),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-
-                // ── Sticky footer ──────────────────────────────────
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Center(
-                    child: Text(
-                      'Зміни зберігаються автоматично',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0x40F0EAE5),
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -810,187 +843,238 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: Stack(
-        children: [
-          // Background image — same as settings, but much darker overlay
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_rifle.webp',
-              fit: BoxFit.cover,
-              alignment: const Alignment(0.2, -1.0),
+    final mq  = MediaQuery.of(context);
+    final bot = mq.padding.bottom;
+    const topPad    = 80.0;
+    final bottomPad = bot + 74.0;
+
+    return SizedBox(
+      height: mq.size.height,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: Stack(
+          children: [
+            // Background
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/bg_rifle.webp',
+                fit: BoxFit.cover,
+                alignment: const Alignment(0.2, -1.0),
+              ),
             ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xE8100C0A), Color(0xF5100C0A)],
+            Positioned.fill(child: Container(color: const Color(0xB8120E0C))),
+            Positioned.fill(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xE60C0A08)],
+                    stops: [0.25, 1.0],
+                  ),
                 ),
               ),
             ),
-          ),
-          // Border overlay
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top:   BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                  left:  BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                  right: BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
+            // Border overlay
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  border: Border(
+                    top:   BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
+                    left:  BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
+                    right: BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
+                  ),
                 ),
               ),
             ),
-          ),
-          // Content
-          Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
-            width: 36, height: 4,
-            margin: const EdgeInsets.only(top: 12),
-            decoration: BoxDecoration(
-              color: const Color(0x2EFFFFFF),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          // Header
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Камера для запису',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
-                          color: Color(0xFFF0EAE5), letterSpacing: -0.2)),
-                  SizedBox(height: 3),
-                  Text('Оберіть лінзу суміщену з окуляром прицілу',
-                      style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
-                ],
-              ),
-            ),
-          ),
-          // Content
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text('Помилка: $_error',
-                  style: const TextStyle(color: Color(0xFFFF6050))),
-            )
-          else if (_cameras == null)
-            const SizedBox(
-                height: 100,
-                child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFFE87722))))
-          else
-            Flexible(
+            // Scrollable content (scrolls under glass panels)
+            Positioned.fill(
               child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Column(
-                children: [
-                  _CamCard(
-                    id: '',
-                    name: 'Авто',
-                    subtitle: 'Повний діапазон · без обмежень',
-                    focalLength: -1,
-                    selected: _selId.isEmpty,
-                    onTap: () => setState(() => _selId = ''),
-                  ),
-                  for (final cam in _cameras!) ...[
-                    const SizedBox(height: 8),
-                    Builder(builder: (_) {
-                      final range = _adjustedRanges[cam.id];
-                      final lo = range?.$1 ?? cam.zoomMin ?? 1.0;
-                      final hi = range?.$2 ?? cam.zoomMax ?? 10.0;
-                      return _CamCard(
-                        id: cam.id,
-                        name: cam.focalLength > 0
-                            ? '${cam.focalLength.toStringAsFixed(1)} мм'
-                            : 'Камера ${cam.id}',
-                        subtitle: cam.isPhysical
-                            ? 'ID: ${cam.id} · фізична лінза'
-                            : 'ID: ${cam.id}',
-                        focalLength: cam.focalLength,
-                        selected: _selId == cam.id,
-                        zoomMin: cam.zoomMin,
-                        zoomMax: cam.zoomMax,
-                        selectedZoomMin: lo,
-                        selectedZoomMax: hi,
-                        onTap: () => setState(() => _selId = cam.id),
-                        onRangeChanged: (min, max) =>
-                            setState(() => _adjustedRanges[cam.id] = (min, max)),
-                      );
-                    }),
-                  ],
-                  const SizedBox(height: 8),
-                ],
+                padding: EdgeInsets.fromLTRB(16, topPad + 8, 16, bottomPad + 16),
+                child: _buildContent(),
               ),
             ),
-            ),
-          // Footer
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-                16, 4, 16, MediaQuery.of(context).padding.bottom + 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      decoration: BoxDecoration(
-                        color: const Color(0x12FFFFFF),
-                        border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
-                        borderRadius: BorderRadius.circular(12),
+            // Glass header
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0x14FFFFFF),
+                      border: Border(
+                        bottom: BorderSide(color: Color(0x1EFFFFFF), width: 0.5),
                       ),
-                      child: const Center(
-                        child: Text('Скасувати',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
-                                color: Color(0xA6F0EAE5))),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 36, height: 4,
+                          margin: const EdgeInsets.only(top: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0x2EFFFFFF),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(20, 14, 20, 12),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Камера для запису',
+                                    style: TextStyle(
+                                      fontSize: 17, fontWeight: FontWeight.w600,
+                                      color: Color(0xFFF0EAE5), letterSpacing: -0.2,
+                                    )),
+                                SizedBox(height: 3),
+                                Text('Оберіть лінзу суміщену з окуляром прицілу',
+                                    style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Glass footer
+            Positioned(
+              bottom: 0, left: 0, right: 0,
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0x14FFFFFF),
+                      border: Border(
+                        top: BorderSide(color: Color(0x1EFFFFFF), width: 0.5),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, bot + 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                                decoration: BoxDecoration(
+                                  color: const Color(0x12FFFFFF),
+                                  border: Border.all(
+                                      color: const Color(0x1EFFFFFF), width: 0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Text('Скасувати',
+                                      style: TextStyle(
+                                        fontSize: 14, fontWeight: FontWeight.w500,
+                                        color: Color(0xA6F0EAE5),
+                                      )),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: GestureDetector(
+                              onTap: () async {
+                                await _apply();
+                                if (context.mounted) Navigator.pop(context);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE87722),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: const [BoxShadow(
+                                    color: Color(0x4DE87722), blurRadius: 12,
+                                    offset: Offset(0, 2),
+                                  )],
+                                ),
+                                child: const Center(
+                                  child: Text('Зберегти',
+                                      style: TextStyle(
+                                        fontSize: 14, fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1A0A00),
+                                      )),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: GestureDetector(
-                    onTap: () async {
-                      await _apply();
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE87722),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [BoxShadow(
-                          color: Color(0x4DE87722), blurRadius: 12,
-                          offset: Offset(0, 2),
-                        )],
-                      ),
-                      child: const Center(
-                        child: Text('Зберегти',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                                color: Color(0xFF1A0A00))),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Text('Помилка: $_error',
+            style: const TextStyle(color: Color(0xFFFF6050))),
+      );
+    }
+    if (_cameras == null) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator(color: Color(0xFFE87722))),
+      );
+    }
+    return Column(
+      children: [
+        _CamCard(
+          id: '',
+          name: 'Авто',
+          subtitle: 'Повний діапазон · без обмежень',
+          focalLength: -1,
+          selected: _selId.isEmpty,
+          onTap: () => setState(() => _selId = ''),
+        ),
+        for (final cam in _cameras!) ...[
+          const SizedBox(height: 8),
+          Builder(builder: (_) {
+            final range = _adjustedRanges[cam.id];
+            final lo = range?.$1 ?? cam.zoomMin ?? 1.0;
+            final hi = range?.$2 ?? cam.zoomMax ?? 10.0;
+            return _CamCard(
+              id: cam.id,
+              name: cam.focalLength > 0
+                  ? '${cam.focalLength.toStringAsFixed(1)} мм'
+                  : 'Камера ${cam.id}',
+              subtitle: cam.isPhysical
+                  ? 'ID: ${cam.id} · фізична лінза'
+                  : 'ID: ${cam.id}',
+              focalLength: cam.focalLength,
+              selected: _selId == cam.id,
+              zoomMin: cam.zoomMin,
+              zoomMax: cam.zoomMax,
+              selectedZoomMin: lo,
+              selectedZoomMax: hi,
+              onTap: () => setState(() => _selId = cam.id),
+              onRangeChanged: (min, max) =>
+                  setState(() => _adjustedRanges[cam.id] = (min, max)),
+            );
+          }),
         ],
-      ),
+      ],
     );
   }
 }
@@ -1046,12 +1130,12 @@ class _CamCard extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
           color: selected
-              ? _accent.withValues(alpha: 0.07)
-              : const Color(0x0EFFFFFF),
+              ? _accent.withValues(alpha: 0.20)
+              : const Color(0x26FFFFFF),
           border: Border.all(
             color: selected
                 ? _accent.withValues(alpha: 0.55)
-                : const Color(0x17FFFFFF),
+                : const Color(0x28FFFFFF),
             width: 0.5,
           ),
           borderRadius: BorderRadius.circular(16),

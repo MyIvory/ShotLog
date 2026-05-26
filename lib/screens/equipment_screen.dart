@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -54,13 +55,15 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
               alignment: const Alignment(0.2, -1.0),
             ),
           ),
+          Positioned.fill(child: Container(color: const Color(0xB8120E0C))),
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xE8100C0A), Color(0xF5100C0A)],
+                  colors: [Colors.transparent, Color(0xE60C0A08)],
+                  stops: [0.25, 1.0],
                 ),
               ),
             ),
@@ -78,118 +81,137 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
               ),
             ),
           ),
-          // Content
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle
-              Container(
-                width: 36, height: 4,
-                margin: const EdgeInsets.only(top: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0x2EFFFFFF),
-                  borderRadius: BorderRadius.circular(2),
+          // ── Lists (full screen, scroll under header/footer) ──
+          Positioned.fill(
+            child: IndexedStack(
+              index: _tab,
+              children: [
+                _RifleTab(topPad: 152, bottomPad: bot + 70),
+                _BulletTab(topPad: 152, bottomPad: bot + 70),
+              ],
+            ),
+          ),
+          // ── Glass header ──
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0x14FFFFFF),
+                    border: Border(bottom: BorderSide(color: Color(0x1EFFFFFF), width: 0.5)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 36, height: 4,
+                        margin: const EdgeInsets.only(top: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0x2EFFFFFF),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Спорядження',
+                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
+                                    color: _kText, letterSpacing: -0.2)),
+                            SizedBox(height: 3),
+                            Text('Гвинтівки та набої',
+                                style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: Row(children: [
+                          Expanded(child: _TabBtn(
+                            label: 'Гвинтівки',
+                            svgActive:   'assets/icons/active/ic_rifle_active.svg',
+                            svgInactive: 'assets/icons/inactive/ic_rifle_inactive.svg',
+                            active: _tab == 0,
+                            onTap: () => setState(() => _tab = 0),
+                          )),
+                          const SizedBox(width: 6),
+                          Expanded(child: _TabBtn(
+                            label: 'Набої',
+                            svgActive:   'assets/icons/active/ic_bullet_active.svg',
+                            svgInactive: 'assets/icons/inactive/ic_bullet_inactive.svg',
+                            active: _tab == 1,
+                            onTap: () => setState(() => _tab = 1),
+                          )),
+                        ]),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              // Header
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Спорядження',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
-                            color: _kText, letterSpacing: -0.2)),
-                    SizedBox(height: 3),
-                    Text('Гвинтівки та набої',
-                        style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
-                  ],
+            ),
+          ),
+          // ── Glass footer ──
+          Positioned(
+            bottom: 0, left: 0, right: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0x14FFFFFF),
+                    border: Border(top: BorderSide(color: Color(0x1EFFFFFF), width: 0.5)),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, bot + 16),
+                    child: Row(children: [
+                      Expanded(child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          decoration: BoxDecoration(
+                            color: const Color(0x12FFFFFF),
+                            border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(child: Text('Закрити',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
+                                  color: Color(0xA6F0EAE5)))),
+                        ),
+                      )),
+                      const SizedBox(width: 8),
+                      Expanded(flex: 2, child: GestureDetector(
+                        onTap: () => _tab == 0
+                            ? _showRifleSheet(context)
+                            : _showBulletSheet(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          decoration: BoxDecoration(
+                            color: _kAccent,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [BoxShadow(
+                              color: Color(0x4DE87722), blurRadius: 12, offset: Offset(0, 2),
+                            )],
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add, color: Color(0xFF1A0A00), size: 18),
+                              SizedBox(width: 4),
+                              Text('Додати',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1A0A00))),
+                            ],
+                          ),
+                        ),
+                      )),
+                    ]),
+                  ),
                 ),
               ),
-              // Tab bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Row(children: [
-                  Expanded(child: _TabBtn(
-                    label: 'Гвинтівки',
-                    svgActive:   'assets/icons/active/ic_rifle_active.svg',
-                    svgInactive: 'assets/icons/inactive/ic_rifle_inactive.svg',
-                    active: _tab == 0,
-                    onTap: () => setState(() => _tab = 0),
-                  )),
-                  const SizedBox(width: 6),
-                  Expanded(child: _TabBtn(
-                    label: 'Набої',
-                    svgActive:   'assets/icons/active/ic_bullet_active.svg',
-                    svgInactive: 'assets/icons/inactive/ic_bullet_inactive.svg',
-                    active: _tab == 1,
-                    onTap: () => setState(() => _tab = 1),
-                  )),
-                ]),
-              ),
-              const SizedBox(height: 8),
-              // List
-              Expanded(
-                child: IndexedStack(
-                  index: _tab,
-                  sizing: StackFit.loose,
-                  children: [
-                    _RifleTab(bottomPad: 8),
-                    _BulletTab(bottomPad: 8),
-                  ],
-                ),
-              ),
-              // Sticky footer
-              Padding(
-                padding: EdgeInsets.fromLTRB(16, 8, 16, bot + 16),
-                child: Row(children: [
-                  Expanded(child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      decoration: BoxDecoration(
-                        color: const Color(0x12FFFFFF),
-                        border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(child: Text('Закрити',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
-                              color: Color(0xA6F0EAE5)))),
-                    ),
-                  )),
-                  const SizedBox(width: 8),
-                  Expanded(flex: 2, child: GestureDetector(
-                    onTap: () {
-                      if (_tab == 0) {
-                        _showRifleSheet(context);
-                      } else {
-                        _showBulletSheet(context);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      decoration: BoxDecoration(
-                        color: _kAccent,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [BoxShadow(
-                          color: Color(0x4DE87722), blurRadius: 12, offset: Offset(0, 2),
-                        )],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.add, color: Color(0xFF1A0A00), size: 18),
-                          SizedBox(width: 4),
-                          Text('Додати',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1A0A00))),
-                        ],
-                      ),
-                    ),
-                  )),
-                ]),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -251,8 +273,9 @@ class _TabBtn extends StatelessWidget {
 // ── Rifles ────────────────────────────────────────────────────────────────────
 
 class _RifleTab extends StatelessWidget {
+  final double topPad;
   final double bottomPad;
-  const _RifleTab({required this.bottomPad});
+  const _RifleTab({required this.topPad, required this.bottomPad});
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +288,7 @@ class _RifleTab extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPad + 16),
+      padding: EdgeInsets.fromLTRB(16, topPad + 8, 16, bottomPad + 16),
       itemCount: rifles.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (ctx, i) => _RifleCard(rifle: rifles[i]),
@@ -300,8 +323,9 @@ class _RifleCard extends StatelessWidget {
 // ── Bullets ───────────────────────────────────────────────────────────────────
 
 class _BulletTab extends StatelessWidget {
+  final double topPad;
   final double bottomPad;
-  const _BulletTab({required this.bottomPad});
+  const _BulletTab({required this.topPad, required this.bottomPad});
 
   @override
   Widget build(BuildContext context) {
@@ -314,7 +338,7 @@ class _BulletTab extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPad + 16),
+      padding: EdgeInsets.fromLTRB(16, topPad + 8, 16, bottomPad + 16),
       itemCount: bullets.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (ctx, i) => _BulletCard(bullet: bullets[i]),
@@ -374,8 +398,8 @@ class _EqCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0x0EF0EAE5),
-        border: Border.all(color: const Color(0x17FFFFFF), width: 0.5),
+        color: const Color(0x26FFFFFF),
+        border: Border.all(color: const Color(0x28FFFFFF), width: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
