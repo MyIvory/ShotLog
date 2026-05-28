@@ -124,11 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0x14FFFFFF),
-                    border: Border(
-                        bottom: BorderSide(color: Color(0x1EFFFFFF), width: 0.5)),
-                  ),
+                  color: Colors.transparent,
                   child: Column(
                     children: [
                       SizedBox(height: top),

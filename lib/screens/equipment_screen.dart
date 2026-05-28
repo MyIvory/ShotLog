@@ -14,12 +14,10 @@ const _kBgBullet = Color(0x803C7850);
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
-Future<void> showEquipmentSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => const EquipmentScreen(),
+void showEquipmentSheet(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const EquipmentScreen()),
   );
 }
 
@@ -37,17 +35,16 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bot = MediaQuery.of(context).padding.bottom;
+    final mq  = MediaQuery.of(context);
+    final top = mq.padding.top;
+    final bot = mq.padding.bottom;
+    final topPad = top + 124.0;
 
-    final screenH = MediaQuery.of(context).size.height;
-
-    return SizedBox(
-      height: screenH,
-      child: ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: Stack(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
         children: [
-          // Background — same as camera picker sheet
+          // Background
           Positioned.fill(
             child: Image.asset(
               'assets/images/bg_rifle.webp',
@@ -68,67 +65,62 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
               ),
             ),
           ),
-          // Border
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top:   BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                  left:  BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                  right: BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                ),
-              ),
-            ),
-          ),
-          // ── Lists (full screen, scroll under header/footer) ──
+          // ── Lists ──
           Positioned.fill(
             child: IndexedStack(
               index: _tab,
               children: [
-                _RifleTab(topPad: 152, bottomPad: bot + 70),
-                _BulletTab(topPad: 152, bottomPad: bot + 70),
+                _RifleTab(topPad: topPad, bottomPad: bot + 16),
+                _BulletTab(topPad: topPad, bottomPad: bot + 16),
               ],
             ),
           ),
-          // ── Glass header ──
+          // ── Transparent blur header ──
           Positioned(
             top: 0, left: 0, right: 0,
             child: ClipRect(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0x14FFFFFF),
-                    border: Border(bottom: BorderSide(color: Color(0x1EFFFFFF), width: 0.5)),
-                  ),
+                  color: Colors.transparent,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 36, height: 4,
-                        margin: const EdgeInsets.only(top: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0x2EFFFFFF),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      SizedBox(height: top),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('Спорядження',
-                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
-                                    color: _kText, letterSpacing: -0.2)),
-                            SizedBox(height: 3),
-                            Text('Гвинтівки та набої',
-                                style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Спорядження',
+                                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700,
+                                          color: _kText, letterSpacing: -0.5)),
+                                  SizedBox(height: 2),
+                                  Text('Твій стрілецький інвентар',
+                                      style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
+                                ],
+                              ),
+                            ),
+                            _EqBtn(
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(Icons.west, color: _kText, size: 18),
+                            ),
+                            const SizedBox(width: 8),
+                            _EqBtn(
+                              onTap: () => _tab == 0
+                                  ? _showRifleSheet(context)
+                                  : _showBulletSheet(context),
+                              child: const Icon(Icons.add, color: _kText, size: 20),
+                            ),
                           ],
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                         child: Row(children: [
                           Expanded(child: _TabBtn(
                             label: 'Гвинтівки',
@@ -153,69 +145,33 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
               ),
             ),
           ),
-          // ── Glass footer ──
-          Positioned(
-            bottom: 0, left: 0, right: 0,
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0x14FFFFFF),
-                    border: Border(top: BorderSide(color: Color(0x1EFFFFFF), width: 0.5)),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 8, 16, bot + 16),
-                    child: Row(children: [
-                      Expanded(child: GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          decoration: BoxDecoration(
-                            color: const Color(0x12FFFFFF),
-                            border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Center(child: Text('Закрити',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
-                                  color: Color(0xA6F0EAE5)))),
-                        ),
-                      )),
-                      const SizedBox(width: 8),
-                      Expanded(flex: 2, child: GestureDetector(
-                        onTap: () => _tab == 0
-                            ? _showRifleSheet(context)
-                            : _showBulletSheet(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          decoration: BoxDecoration(
-                            color: _kAccent,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [BoxShadow(
-                              color: Color(0x4DE87722), blurRadius: 12, offset: Offset(0, 2),
-                            )],
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add, color: Color(0xFF1A0A00), size: 18),
-                              SizedBox(width: 4),
-                              Text('Додати',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1A0A00))),
-                            ],
-                          ),
-                        ),
-                      )),
-                    ]),
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
-    ));
+    );
+  }
+}
+
+// ── Header button (glass square) ──────────────────────────────────────────────
+
+class _EqBtn extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  const _EqBtn({required this.onTap, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0x1AFFFFFF),
+          border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(child: child),
+      ),
+    );
   }
 }
 

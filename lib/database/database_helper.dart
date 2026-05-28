@@ -15,7 +15,7 @@ class DatabaseHelper {
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'shotlog.db');
-    return openDatabase(path, version: 5, onCreate: _onCreate, onUpgrade: _onUpgrade);
+    return openDatabase(path, version: 7, onCreate: _onCreate, onUpgrade: _onUpgrade);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -47,6 +47,12 @@ class DatabaseHelper {
     }
     if (oldVersion < 5) {
       await db.execute('ALTER TABLE bullets ADD COLUMN velocity_ms REAL');
+    }
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE shots ADD COLUMN duration_ms INTEGER');
+    }
+    if (oldVersion < 7) {
+      await db.execute('ALTER TABLE sessions ADD COLUMN duration_sec INTEGER');
     }
   }
 
@@ -81,7 +87,8 @@ class DatabaseHelper {
         distance_m REAL,
         weather TEXT,
         notes TEXT,
-        detection_dbfs REAL
+        detection_dbfs REAL,
+        duration_sec INTEGER
       )
     ''');
     await db.execute('''
@@ -93,7 +100,8 @@ class DatabaseHelper {
         clip_path TEXT NOT NULL,
         shot_offset_ms INTEGER NOT NULL,
         thumbnail_path TEXT,
-        trigger_dbfs REAL
+        trigger_dbfs REAL,
+        duration_ms INTEGER
       )
     ''');
   }

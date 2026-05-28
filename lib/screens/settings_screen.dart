@@ -189,11 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0x14FFFFFF),
-                    border: Border(
-                        bottom: BorderSide(color: Color(0x1EFFFFFF), width: 0.5)),
-                  ),
+                  color: Colors.transparent,
                   child: Column(
                     children: [
                       SizedBox(height: top),
@@ -757,16 +753,16 @@ class _CameraGlassRow extends StatelessWidget {
   String _zl(double z) =>
       z == z.roundToDouble() ? '${z.toInt()}×' : '${z.toStringAsFixed(1)}×';
 
-  void _showPicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _CameraPickerSheet(
-        selectedId: selectedId,
-        onChanged: onChanged,
+  Future<void> _showPicker(BuildContext context) async {
+    final result = await Navigator.push<(String, double, double)?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _CameraPickerSheet(selectedId: selectedId),
       ),
     );
+    if (result != null) {
+      onChanged(result.$1, result.$2, result.$3);
+    }
   }
 
   @override
@@ -790,8 +786,7 @@ class _CameraGlassRow extends StatelessWidget {
 
 class _CameraPickerSheet extends StatefulWidget {
   final String selectedId;
-  final _CameraSelectedCallback onChanged;
-  const _CameraPickerSheet({required this.selectedId, required this.onChanged});
+  const _CameraPickerSheet({required this.selectedId});
 
   @override
   State<_CameraPickerSheet> createState() => _CameraPickerSheetState();
@@ -833,193 +828,106 @@ class _CameraPickerSheetState extends State<_CameraPickerSheet> {
     }
   }
 
-  Future<void> _apply() async {
+  Future<void> _saveAndPop() async {
     for (final entry in _adjustedRanges.entries) {
       await _svc.saveCameraZoomRange(entry.key, entry.value.$1, entry.value.$2);
     }
     final range = _selId.isNotEmpty ? _adjustedRanges[_selId] : null;
-    widget.onChanged(_selId, range?.$1 ?? 0.0, range?.$2 ?? 0.0);
+    if (mounted) {
+      Navigator.pop(context, (_selId, range?.$1 ?? 0.0, range?.$2 ?? 0.0));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final mq  = MediaQuery.of(context);
+    final top = mq.padding.top;
     final bot = mq.padding.bottom;
-    const topPad    = 80.0;
-    final bottomPad = bot + 74.0;
+    final topPad = top + 76.0;
 
-    return SizedBox(
-      height: mq.size.height,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        child: Stack(
-          children: [
-            // Background
-            Positioned.fill(
-              child: Image.asset(
-                'assets/images/bg_rifle.webp',
-                fit: BoxFit.cover,
-                alignment: const Alignment(0.2, -1.0),
-              ),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Background
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/bg_rifle.webp',
+              fit: BoxFit.cover,
+              alignment: const Alignment(0.2, -1.0),
             ),
-            Positioned.fill(child: Container(color: const Color(0xB8120E0C))),
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0xE60C0A08)],
-                    stops: [0.25, 1.0],
-                  ),
+          ),
+          Positioned.fill(child: Container(color: const Color(0xB8120E0C))),
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xE60C0A08)],
+                  stops: [0.25, 1.0],
                 ),
               ),
             ),
-            // Border overlay
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  border: Border(
-                    top:   BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                    left:  BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                    right: BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-                  ),
-                ),
-              ),
+          ),
+          // Scrollable content
+          Positioned.fill(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(16, topPad + 8, 16, bot + 24),
+              child: _buildContent(),
             ),
-            // Scrollable content (scrolls under glass panels)
-            Positioned.fill(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(16, topPad + 8, 16, bottomPad + 16),
-                child: _buildContent(),
-              ),
-            ),
-            // Glass header
-            Positioned(
-              top: 0, left: 0, right: 0,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color(0x14FFFFFF),
-                      border: Border(
-                        bottom: BorderSide(color: Color(0x1EFFFFFF), width: 0.5),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 36, height: 4,
-                          margin: const EdgeInsets.only(top: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0x2EFFFFFF),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(20, 14, 20, 12),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Камера для запису',
-                                    style: TextStyle(
-                                      fontSize: 17, fontWeight: FontWeight.w600,
-                                      color: Color(0xFFF0EAE5), letterSpacing: -0.2,
-                                    )),
-                                SizedBox(height: 3),
-                                Text('Оберіть лінзу суміщену з окуляром прицілу',
-                                    style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Glass footer
-            Positioned(
-              bottom: 0, left: 0, right: 0,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color(0x14FFFFFF),
-                      border: Border(
-                        top: BorderSide(color: Color(0x1EFFFFFF), width: 0.5),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(16, 12, 16, bot + 16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => Navigator.of(context).pop(),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                decoration: BoxDecoration(
-                                  color: const Color(0x12FFFFFF),
-                                  border: Border.all(
-                                      color: const Color(0x1EFFFFFF), width: 0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Center(
-                                  child: Text('Скасувати',
+          ),
+          // Transparent blur header
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: top),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Камера для запису',
                                       style: TextStyle(
-                                        fontSize: 14, fontWeight: FontWeight.w500,
-                                        color: Color(0xA6F0EAE5),
+                                        fontSize: 26, fontWeight: FontWeight.w700,
+                                        color: Color(0xFFF0EAE5), letterSpacing: -0.5,
                                       )),
-                                ),
+                                  SizedBox(height: 2),
+                                  Text('Оберіть лінзу для запису',
+                                      style: TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
+                                ],
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            flex: 2,
-                            child: GestureDetector(
-                              onTap: () async {
-                                await _apply();
-                                if (context.mounted) Navigator.pop(context);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE87722),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: const [BoxShadow(
-                                    color: Color(0x4DE87722), blurRadius: 12,
-                                    offset: Offset(0, 2),
-                                  )],
-                                ),
-                                child: const Center(
-                                  child: Text('Зберегти',
-                                      style: TextStyle(
-                                        fontSize: 14, fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1A0A00),
-                                      )),
-                                ),
-                              ),
+                            _CamBtn(
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(Icons.west, color: Color(0xFFF0EAE5), size: 18),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            _CamBtn(
+                              onTap: _saveAndPop,
+                              child: const Icon(Icons.check, color: Color(0xFFF0EAE5), size: 18),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1447,4 +1355,28 @@ class _DualSliderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DualSliderPainter old) =>
       old.lo != lo || old.hi != hi || old.accent != accent;
+}
+
+// ── Camera picker header button ───────────────────────────────────────────────
+
+class _CamBtn extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  const _CamBtn({required this.onTap, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0x1AFFFFFF),
+          border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
 }

@@ -20,6 +20,16 @@ class ShotRepository {
     return rows.map(Shot.fromMap).toList();
   }
 
+  Future<void> updateDuration(int shotId, int durationMs) async {
+    final db = await _helper.database;
+    await db.update(
+      'shots',
+      {'duration_ms': durationMs},
+      where: 'id = ?',
+      whereArgs: [shotId],
+    );
+  }
+
   Future<void> updateThumbnail(int shotId, String thumbnailPath) async {
     final db = await _helper.database;
     await db.update(
