@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/rifle.dart';
 import '../models/bullet.dart';
 import '../providers/equipment_provider.dart';
+import '../widgets/parallax_bg.dart';
 
 const _kAccent   = Color(0xFFE87722);
 const _kText     = Color(0xFFF0EAE5);
@@ -45,11 +46,10 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
       body: Stack(
         children: [
           // Background
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_rifle.webp',
-              fit: BoxFit.cover,
-              alignment: const Alignment(0.2, -1.0),
+          const Positioned.fill(
+            child: ParallaxBg(
+              asset: 'assets/images/bg_rifle.webp',
+              baseAlignment: Alignment(0.2, -1.0),
             ),
           ),
           Positioned.fill(child: Container(color: const Color(0xB8120E0C))),

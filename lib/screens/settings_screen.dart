@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/app_settings.dart';
 import '../services/physical_camera_service.dart';
 import '../services/settings_service.dart';
+import '../widgets/parallax_bg.dart';
 import '../widgets/threshold_picker.dart';
 import 'equipment_screen.dart';
 
@@ -260,10 +261,9 @@ class _PhotoBg extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            'assets/images/bg_rifle.webp',
-            fit: BoxFit.cover,
-            alignment: const Alignment(0.2, -1.0),
+          const ParallaxBg(
+            asset: 'assets/images/bg_rifle.webp',
+            baseAlignment: Alignment(0.2, -1.0),
           ),
           // Flat dark overlay
           Container(color: const Color(0xB8120E0C)),

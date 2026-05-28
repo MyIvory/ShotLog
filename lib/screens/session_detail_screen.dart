@@ -14,6 +14,7 @@ import '../models/rifle.dart';
 import '../models/bullet.dart';
 import '../providers/session_provider.dart';
 import '../services/settings_service.dart';
+import '../widgets/parallax_bg.dart';
 import '../widgets/shot_list_item.dart';
 import '../widgets/video_player_overlay.dart';
 import 'session_screen.dart';
@@ -226,9 +227,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
       body: Stack(
         children: [
           // ── Background (same as HomeScreen) ─────────────────────────
-          Positioned.fill(
-            child: Image.asset('assets/images/bg_range.png',
-                fit: BoxFit.cover, alignment: Alignment.topCenter),
+          const Positioned.fill(
+            child: ParallaxBg(asset: 'assets/images/bg_range.png'),
           ),
           Positioned.fill(
             child: const DecoratedBox(
