@@ -10,6 +10,7 @@ class Session {
   final String? weather;
   final String? notes;
   final double? detectionDbfs;
+  final int? durationSec;
 
   const Session({
     this.id,
@@ -23,6 +24,7 @@ class Session {
     this.weather,
     this.notes,
     this.detectionDbfs,
+    this.durationSec,
   });
 
   Map<String, dynamic> toMap() => {
@@ -37,13 +39,16 @@ class Session {
         'weather': weather,
         'notes': notes,
         'detection_dbfs': detectionDbfs,
+        'duration_sec': durationSec,
       };
 
   factory Session.fromMap(Map<String, dynamic> m) => Session(
         id: m['id'] as int?,
         name: m['name'] as String?,
         createdAt: DateTime.parse(m['created_at'] as String),
-        endedAt: m['ended_at'] != null ? DateTime.parse(m['ended_at'] as String) : null,
+        endedAt: m['ended_at'] != null
+            ? DateTime.parse(m['ended_at'] as String)
+            : null,
         shotCount: m['shot_count'] as int? ?? 0,
         rifleId: m['rifle_id'] as int?,
         bulletId: m['bullet_id'] as int?,
@@ -51,6 +56,7 @@ class Session {
         weather: m['weather'] as String?,
         notes: m['notes'] as String?,
         detectionDbfs: m['detection_dbfs'] as double?,
+        durationSec: m['duration_sec'] as int?,
       );
 
   Session copyWith({
@@ -66,6 +72,7 @@ class Session {
     String? weather,
     String? notes,
     double? detectionDbfs,
+    int? durationSec,
   }) =>
       Session(
         id: id ?? this.id,
@@ -79,5 +86,6 @@ class Session {
         weather: weather ?? this.weather,
         notes: notes ?? this.notes,
         detectionDbfs: detectionDbfs ?? this.detectionDbfs,
+        durationSec: durationSec ?? this.durationSec,
       );
 }

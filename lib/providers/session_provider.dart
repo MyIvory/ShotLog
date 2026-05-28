@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import '../models/session.dart';
 import '../models/shot.dart';
 import '../models/app_settings.dart';
@@ -35,6 +36,7 @@ class SessionProvider extends ChangeNotifier {
   Timer? _warningBeepTimer;
   Timer? _postRollTimer;
   DateTime? _recordingStartTime;
+  DateTime? _sessionStartTime;
 
   SessionState get state => _state;
   Session? get activeSession => _activeSession;
@@ -82,6 +84,7 @@ class SessionProvider extends ChangeNotifier {
   Future<void> startSession(Session session, AppSettings settings) async {
     _settings = settings;
     _shots.clear();
+    _sessionStartTime = DateTime.now();
 
     await _video.initialize(cameraId: settings.selectedCameraId);
 
@@ -101,6 +104,7 @@ class SessionProvider extends ChangeNotifier {
   Future<void> continueSession(Session session, AppSettings settings) async {
     _settings = settings;
     _shots.clear();
+    _sessionStartTime = DateTime.now();
 
     // Load existing shots so new shot numbers continue correctly.
     final existing = await _shotRepo.getBySession(session.id!);
@@ -251,9 +255,21 @@ class SessionProvider extends ChangeNotifier {
           clipPath: finalPath,
           shotOffsetMs: finalOffsetMs,
           triggerDbfs: triggerDbfs,
+          durationMs: finalOffsetMs + _settings.postRollSec * 1000,
         );
         final id = await _shotRepo.insert(shot);
-        _shots.add(shot.copyWith(id: id));
+        String? thumbPath;
+        try {
+          thumbPath = await VideoThumbnail.thumbnailFile(
+            video: finalPath,
+            thumbnailPath: finalPath.replaceAll('.mp4', '_thumb.jpg'),
+            imageFormat: ImageFormat.JPEG,
+            timeMs: finalOffsetMs,
+            quality: 75,
+          );
+          if (thumbPath != null) await _shotRepo.updateThumbnail(id, thumbPath);
+        } catch (_) {}
+        _shots.add(shot.copyWith(id: id, thumbnailPath: thumbPath));
 
         final updated = _activeSession!.copyWith(shotCount: _shots.length);
         await _sessionRepo.update(updated);
@@ -280,7 +296,14 @@ class SessionProvider extends ChangeNotifier {
     }
 
     if (_activeSession != null) {
-      final ended = _activeSession!.copyWith(endedAt: DateTime.now());
+      final elapsed = _sessionStartTime != null
+          ? DateTime.now().difference(_sessionStartTime!).inSeconds
+          : 0;
+      final totalSec = (_activeSession!.durationSec ?? 0) + elapsed;
+      final ended = _activeSession!.copyWith(
+        endedAt: DateTime.now(),
+        durationSec: totalSec,
+      );
       await _sessionRepo.update(ended);
     }
 

@@ -1,6 +1,11 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../models/shot.dart';
+
+const _kText   = Color(0xFFF0EAE5);
+const _kHint   = Color(0x61F0EAE5);
+const _kAccent = Color(0xFFE87722);
 
 class ShotListItem extends StatelessWidget {
   final Shot shot;
@@ -18,52 +23,48 @@ class ShotListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tile = Padding(
-      padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
-      child: Material(
-        color: const Color(0xFF261E1A),
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF33281F)),
+    final tile = GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0x26FFFFFF),
+          border: Border.all(color: const Color(0x28FFFFFF), width: 0.5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            // ── Thumbnail ──────────────────────────────────────────────
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(13)),
+              child: _Thumbnail(path: shot.thumbnailPath),
             ),
-            child: Row(
-              children: [
-                _Thumbnail(path: shot.thumbnailPath),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Постріл #${shot.shotNumber} · ${_formatTime(shot.detectedAt)}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFFD0C4BC),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _subtitle(),
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: Color(0xFF7A6E68),
-                        ),
-                      ),
-                    ],
-                  ),
+            const SizedBox(width: 12),
+            // ── Chips ──────────────────────────────────────────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  children: [
+                    _ShotChip(
+                      label: '#${shot.shotNumber}',
+                      accent: true,
+                    ),
+                    _ShotChip(label: _fmtTime(shot.detectedAt)),
+                    if (shot.durationMs != null)
+                      _ShotChip(label: _fmtDuration(shot.durationMs!)),
+                  ],
                 ),
-                const Icon(Icons.chevron_right,
-                    color: Color(0xFF4A3528), size: 18),
-              ],
+              ),
             ),
-          ),
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(Icons.chevron_right,
+                  size: 16, color: Color(0x38F0EAE5)),
+            ),
+          ],
         ),
       ),
     );
@@ -74,56 +75,174 @@ class ShotListItem extends StatelessWidget {
       key: ValueKey(shot.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.fromLTRB(10, 0, 10, 7),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
           color: Colors.redAccent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
-      confirmDismiss: (_) async {
-        return await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Видалити постріл?'),
-                content: const Text('Відео буде видалено безповоротно.'),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Скасувати')),
-                  FilledButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Видалити')),
-                ],
-              ),
-            ) ??
-            false;
-      },
+      confirmDismiss: (_) async =>
+          await _showGlassConfirm(
+            context: context,
+            title: 'Видалити постріл?',
+            body: 'Відео буде видалено безповоротно.',
+          ) ??
+          false,
       onDismissed: (_) => onDelete!(),
       child: tile,
     );
   }
 
-  String _subtitle() {
-    final parts = <String>[];
-    if (shot.triggerDbfs != null) {
-      parts.add('${shot.triggerDbfs!.toStringAsFixed(1)} dBFS');
-    }
-    if (preRollMs > 0) {
-      parts.add('${(preRollMs / 1000).toStringAsFixed(2)}с pre-roll');
-    }
-    return parts.join(' · ');
-  }
-
-  String _formatTime(DateTime dt) {
+  String _fmtTime(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     final s = dt.second.toString().padLeft(2, '0');
     return '$h:$m:$s';
   }
+
+  String _fmtDuration(int ms) {
+    final total = ms ~/ 1000;
+    final m = (total ~/ 60).toString().padLeft(2, '0');
+    final s = (total % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
 }
+
+// ── Chip ──────────────────────────────────────────────────────────────────────
+
+class _ShotChip extends StatelessWidget {
+  final String label;
+  final bool accent;
+  const _ShotChip({required this.label, this.accent = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: accent
+            ? const Color(0xCCB05010)
+            : const Color(0x0FFFFFFF),
+        border: Border.all(
+          color: accent
+              ? const Color(0x33FFFFFF)
+              : const Color(0x1AFFFFFF),
+          width: 0.5,
+        ),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: accent ? FontWeight.w700 : FontWeight.w500,
+          color: accent
+              ? const Color(0xFFF0EAE5)
+              : const Color(0x99F0EAE5),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Glass confirm dialog ──────────────────────────────────────────────────────
+
+Future<bool?> _showGlassConfirm({
+  required BuildContext context,
+  required String title,
+  required String body,
+}) {
+  return showDialog<bool>(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (ctx) => Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Material(
+          color: Colors.transparent,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                decoration: BoxDecoration(
+                  color: const Color(0x26FFFFFF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: const Color(0x28FFFFFF), width: 0.5),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: _kText)),
+                    const SizedBox(height: 8),
+                    Text(body,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 13, color: _kHint, height: 1.4)),
+                    const SizedBox(height: 20),
+                    Row(children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(ctx, false),
+                          child: Container(
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0x1AFFFFFF),
+                              border: Border.all(
+                                  color: const Color(0x1EFFFFFF), width: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: Text('Скасувати',
+                                  style: TextStyle(
+                                      fontSize: 14, color: _kText)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(ctx, true),
+                          child: Container(
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0x33FF4040),
+                              border: Border.all(
+                                  color: const Color(0x55FF4040), width: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: Text('Видалити',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFFF6B6B))),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+// ── Thumbnail ─────────────────────────────────────────────────────────────────
 
 class _Thumbnail extends StatelessWidget {
   final String? path;
@@ -134,24 +253,15 @@ class _Thumbnail extends StatelessWidget {
     if (path != null) {
       final file = File(path!);
       if (file.existsSync()) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Image.file(file,
-              width: 48, height: 32, fit: BoxFit.cover),
-        );
+        return Image.file(file, width: 96, height: 64, fit: BoxFit.cover);
       }
     }
-    // Placeholder with amber play triangle
     return Container(
-      width: 48,
-      height: 32,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A1806),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      width: 96,
+      height: 64,
+      color: const Color(0x33000000),
       child: const Center(
-        child: Icon(Icons.play_arrow,
-            color: Color(0xFFE87722), size: 18),
+        child: Icon(Icons.play_circle_outline, color: _kAccent, size: 28),
       ),
     );
   }
