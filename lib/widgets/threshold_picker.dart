@@ -44,7 +44,6 @@ class _ThresholdScreenState extends State<ThresholdScreen>
   String? _tempPath;
   late final Ticker _ticker;
 
-  double _currentDbfs = -60.0;
   late double _threshDb;
   double _phase = 0.0;
   int    _lastMs = 0;
@@ -87,7 +86,6 @@ class _ThresholdScreenState extends State<ThresholdScreen>
         if (!mounted) return;
         final db = amp.current.clamp(_kDbMin, _kDbMax);
         setState(() {
-          _currentDbfs = db;
           _history.removeAt(0);
           _history.add(db);
         });
@@ -128,8 +126,6 @@ class _ThresholdScreenState extends State<ThresholdScreen>
     final mq     = MediaQuery.of(context);
     final top    = mq.padding.top;
     final bot    = mq.padding.bottom;
-    final margin = _threshDb - _currentDbfs;
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -159,23 +155,6 @@ class _ThresholdScreenState extends State<ThresholdScreen>
           Column(
             children: [
               SizedBox(height: top + 76 + 8),
-              // Chips below header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                child: Row(
-                  children: [
-                    _InfoChip(
-                      label: 'Зараз',
-                      value: '${_currentDbfs.toStringAsFixed(0)} dBFS',
-                    ),
-                    const SizedBox(width: 8),
-                    _InfoChip(
-                      label: 'Запас',
-                      value: '${margin >= 0 ? '+' : ''}${margin.toStringAsFixed(0)} dB',
-                    ),
-                  ],
-                ),
-              ),
               // Radial visualizer — fills all available height
               Expanded(
                 child: Padding(
@@ -258,39 +237,6 @@ class _ThresholdScreenState extends State<ThresholdScreen>
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Info chip ─────────────────────────────────────────────────────────────────
-
-class _InfoChip extends StatelessWidget {
-  final String label;
-  final String value;
-  const _InfoChip({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0x1AFFFFFF),
-        border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label.toUpperCase(),
-              style: const TextStyle(
-                  fontSize: 9, color: _kHint, letterSpacing: 0.5)),
-          const SizedBox(height: 2),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: _kText)),
         ],
       ),
     );
@@ -390,10 +336,10 @@ class _RadialPainter extends CustomPainter {
     final threshNorm = ((threshDb - _kDbMin) / (_kDbMax - _kDbMin)).clamp(0.0, 1.0);
     final threshR    = baseR + threshNorm * maxDisp;
 
-    // ── Threshold value in center ─────────────────────────────
+    // ── Current level in center ───────────────────────────────
     final tpNum = TextPainter(
       text: TextSpan(
-        text: threshDb.abs().toStringAsFixed(0),
+        text: history.last.abs().toStringAsFixed(0),
         style: TextStyle(
           fontSize: 38,
           fontWeight: FontWeight.w700,
@@ -457,18 +403,62 @@ class _RadialPainter extends CustomPainter {
             ..style = PaintingStyle.stroke);
     }
 
-    // ── Threshold ring — blur glow (single circle, acceptable cost) ─
+    // ── Threshold ring — frosted glass, matches chip style ───────
     canvas.drawCircle(center, threshR,
         Paint()
-          ..color = waveColor.withValues(alpha: 0.35)
-          ..strokeWidth = 12
+          ..color = const Color(0x44FFFFFF)
+          ..strokeWidth = 20
           ..style = PaintingStyle.stroke
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12));
     canvas.drawCircle(center, threshR,
         Paint()
-          ..color = waveColor.withValues(alpha: 0.85)
+          ..color = const Color(0x42FFFFFF)
           ..strokeWidth = 0.8
           ..style = PaintingStyle.stroke);
+
+    // ── Threshold chip — frosted glass, above all layers ──────
+    const angle11   = -math.pi / 2 - math.pi / 6; // 11 o'clock
+    const cPadH = 7.0, cPadV = 4.0;
+    final tpChip = TextPainter(
+      text: const TextSpan(
+        text: 'ПОРІГ',
+        style: TextStyle(
+          fontSize: 9,
+          color: Color(0x80F0EAE5),
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final tpChipVal = TextPainter(
+      text: TextSpan(
+        text: '${threshDb.abs().toStringAsFixed(0)} dB',
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Color(0xCCF0EAE5),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final chipW = math.max(tpChip.width, tpChipVal.width) + cPadH * 2;
+    final chipH = tpChip.height + 2 + tpChipVal.height + cPadV * 2;
+    // Offset center outward + nudge left&up so circle doesn't intersect chip
+    final chipCx = center.dx + (threshR + chipH / 2 + 10) * math.cos(angle11) - 6;
+    final chipCy = center.dy + (threshR + chipH / 2 + 10) * math.sin(angle11) - 6;
+    final chipRect = Rect.fromCenter(
+        center: Offset(chipCx, chipCy), width: chipW, height: chipH);
+    final chipRRect = RRect.fromRectAndRadius(chipRect, const Radius.circular(9));
+    canvas.drawRRect(chipRRect, Paint()..color = const Color(0x26FFFFFF));
+    canvas.drawRRect(chipRRect,
+        Paint()
+          ..color = const Color(0x28FFFFFF)
+          ..strokeWidth = 0.5
+          ..style = PaintingStyle.stroke);
+    tpChip.paint(canvas,
+        Offset(chipRect.left + cPadH, chipRect.top + cPadV));
+    tpChipVal.paint(canvas,
+        Offset(chipRect.left + cPadH, chipRect.top + cPadV + tpChip.height + 2));
   }
 
   @override
