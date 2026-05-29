@@ -214,7 +214,7 @@ class _ThresholdScreenState extends State<ThresholdScreen>
                                           color: _kText,
                                           letterSpacing: -0.5)),
                                   SizedBox(height: 2),
-                                  Text('тягніть від центру',
+                                  Text('Тягніть від центру',
                                       style: TextStyle(fontSize: 12, color: _kHint)),
                                 ],
                               ),
