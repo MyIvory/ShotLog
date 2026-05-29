@@ -159,6 +159,23 @@ class _ThresholdScreenState extends State<ThresholdScreen>
           Column(
             children: [
               SizedBox(height: top + 76 + 8),
+              // Chips below header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Row(
+                  children: [
+                    _InfoChip(
+                      label: 'Зараз',
+                      value: '${_currentDbfs.toStringAsFixed(0)} dBFS',
+                    ),
+                    const SizedBox(width: 8),
+                    _InfoChip(
+                      label: 'Запас',
+                      value: '${margin >= 0 ? '+' : ''}${margin.toStringAsFixed(0)} dB',
+                    ),
+                  ],
+                ),
+              ),
               // Radial visualizer — fills all available height
               Expanded(
                 child: Padding(
@@ -186,36 +203,7 @@ class _ThresholdScreenState extends State<ThresholdScreen>
                   ),
                 ),
               ),
-              // Stats chips
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Row(
-                  children: [
-                    _StatChip(
-                      label: 'Зараз',
-                      value: '${_currentDbfs.toStringAsFixed(0)} dBFS',
-                      valueColor: const Color(0xFF6EE0A0),
-                    ),
-                    const SizedBox(width: 8),
-                    _StatChip(
-                      label: 'Поріг',
-                      value: '${_threshDb.toStringAsFixed(0)} dBFS',
-                      valueColor: const Color(0xFFE87722),
-                    ),
-                    const SizedBox(width: 8),
-                    _StatChip(
-                      label: 'Запас',
-                      value: '${margin >= 0 ? '+' : ''}${margin.toStringAsFixed(0)} dB',
-                      valueColor: margin >= 10
-                          ? const Color(0xFF6EE0A0)
-                          : margin >= 3
-                              ? const Color(0xFFE87722)
-                              : const Color(0xFFFF6050),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: bot),
+              SizedBox(height: bot + 16),
             ],
           ),
 
@@ -236,22 +224,19 @@ class _ThresholdScreenState extends State<ThresholdScreen>
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Expanded(
+                            const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Поріг детекції',
+                                  Text('Поріг детекції',
                                       style: TextStyle(
                                           fontSize: 26,
                                           fontWeight: FontWeight.w700,
                                           color: _kText,
                                           letterSpacing: -0.5)),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${_threshDb.toStringAsFixed(0)} dBFS · тягніть вгору/вниз',
-                                    style: const TextStyle(
-                                        fontSize: 12, color: _kHint),
-                                  ),
+                                  SizedBox(height: 2),
+                                  Text('тягніть від центру',
+                                      style: TextStyle(fontSize: 12, color: _kHint)),
                                 ],
                               ),
                             ),
@@ -273,6 +258,39 @@ class _ThresholdScreenState extends State<ThresholdScreen>
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Info chip ─────────────────────────────────────────────────────────────────
+
+class _InfoChip extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoChip({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0x1AFFFFFF),
+        border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label.toUpperCase(),
+              style: const TextStyle(
+                  fontSize: 9, color: _kHint, letterSpacing: 0.5)),
+          const SizedBox(height: 2),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: _kText)),
         ],
       ),
     );
@@ -303,49 +321,20 @@ class _HdrBtn extends StatelessWidget {
   }
 }
 
-// ── Stat chip ─────────────────────────────────────────────────────────────────
 
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color  valueColor;
-  const _StatChip({required this.label, required this.value, required this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0x0DFFFFFF),
-          border: Border.all(color: const Color(0x14FFFFFF), width: 0.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label.toUpperCase(),
-                style: const TextStyle(
-                    fontSize: 10, color: Color(0x59F0EAE5), letterSpacing: 0.5)),
-            const SizedBox(height: 2),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: valueColor)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Radial dot painter ────────────────────────────────────────────────────────
+// ── Radial glow wave painter ──────────────────────────────────────────────────
 
 class _RadialPainter extends CustomPainter {
   final List<double> history;
   final double threshDb;
   final double phase;
 
-  static const _kBars = 72;
+  // Two colour families alternating between layers (warm + cool)
+  static const _kWarm = Color(0xFFE87722); // amber — near threshold
+  static const _kHot  = Color(0xFFFF6050); // above threshold
+
+  static const _kLayers = 7;
+  static const _kPoints = 200; // points per closed curve
 
   const _RadialPainter({
     required this.history,
@@ -353,137 +342,133 @@ class _RadialPainter extends CustomPainter {
     required this.phase,
   });
 
-  Color _barColor(double db) {
-    final margin = threshDb - db;
-    if (margin > 15) return const Color(0xFF6EE0A0);
-    if (margin > 5) {
-      final t = (15 - margin) / 10;
-      return Color.fromRGBO(
-        (110 + t * (232 - 110)).round(),
-        (224 + t * (119 - 224)).round(),
-        (160 + t * (34  - 160)).round(),
-        1.0,
-      );
-    }
-    if (margin > 0) return const Color(0xFFE87722);
-    return const Color(0xFFFF6050);
+  // Spatial variation per angle (multi-harmonic, returns ≈ −1..+1)
+  double _vary(double angle, int layer) {
+    final po = layer * 0.55;
+    return 0.46 * math.sin(angle * 2 + phase * 1.30 + po) +
+           0.28 * math.sin(angle * 3 + phase * 0.85 + po * 1.6) +
+           0.16 * math.sin(angle * 5 + phase * 2.20 + po * 0.8) +
+           0.10 * math.sin(angle * 8 + phase * 1.55 + po * 1.3);
   }
 
-  Path _dashedCircle(Offset center, double r) {
-    final path         = Path();
-    final circumference = 2 * math.pi * r;
-    final totalDashes  = (circumference / 14.0).floor().clamp(1, 999);
-    final stepAngle    = 2 * math.pi / totalDashes;
-    final dashAngle    = (8.0 / circumference) * 2 * math.pi;
-    final rect         = Rect.fromCircle(center: center, radius: r);
-    for (int i = 0; i < totalDashes; i++) {
-      path.addArc(rect, -math.pi / 2 + i * stepAngle, dashAngle);
+  Path _buildPath(Offset center, double baseR, double maxDisp,
+      double amp, int layer) {
+    final path = Path();
+    for (int i = 0; i <= _kPoints; i++) {
+      final angle = (i / _kPoints) * 2 * math.pi - math.pi / 2;
+      final v = _vary(angle, layer); // −1..+1
+      final dispFactor = (v + 1.0) / 2.0; // 0..1
+      // Minimum visible radius even at silence (subtle ambient shape)
+      final r = baseR + (0.08 + amp * 0.92) * maxDisp * dispFactor;
+      final px = center.dx + r * math.cos(angle);
+      final py = center.dy + r * math.sin(angle);
+      if (i == 0) { path.moveTo(px, py); } else { path.lineTo(px, py); }
     }
+    path.close();
     return path;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     final w      = size.width;
-    final h      = size.height;
-    final center = Offset(w / 2, h / 2);
+    final center = Offset(w / 2, size.height / 2);
+    final baseR  = w * 0.18;
+    final maxDisp = w * 0.30;
 
-    final baseR   = w * 0.19;
-    final maxDisp = w * 0.28;
-    final dotR    = w * 0.0085;
-    final dotStep = dotR * 2 + w * 0.005;
-    final maxDots = (maxDisp / dotStep).floor();
+    // Smooth amplitude over last 4 samples
+    final n = history.length;
+    final recentDb = n >= 4
+        ? (history[n-1] + history[n-2] + history[n-3] + history[n-4]) / 4
+        : history.last;
+    final amp = ((recentDb - _kDbMin) / (_kDbMax - _kDbMin)).clamp(0.0, 1.0);
+
+    final margin     = threshDb - recentDb;
+    final waveColor  = margin > 15 ? const Color(0xFF5AB4E8)
+                     : margin > 0  ? _kWarm
+                     : _kHot;
 
     final threshNorm = ((threshDb - _kDbMin) / (_kDbMax - _kDbMin)).clamp(0.0, 1.0);
     final threshR    = baseR + threshNorm * maxDisp;
 
-    // ── Inner ring pulse ─────────────────────────────────────
-    final pulseA = 0.07 + 0.04 * math.sin(phase * 1.5);
-    canvas.drawCircle(center, baseR,
-        Paint()..color = Color.fromRGBO(110, 224, 160, pulseA));
-    canvas.drawCircle(center, baseR,
-        Paint()
-          ..color = const Color(0x33FFFFFF)
-          ..strokeWidth = 0.5
-          ..style = PaintingStyle.stroke);
-
-    // ── Danger zone fill ─────────────────────────────────────
-    canvas.drawCircle(center, threshR,
-        Paint()..color = const Color(0x08FF503C));
-
-    // ── Dot bars — all react to current level simultaneously ──
-    // Smooth current level over last 3 samples
-    final recentDb = history.length >= 3
-        ? (history[history.length - 1] +
-               history[history.length - 2] +
-               history[history.length - 3]) /
-              3
-        : history.last;
-    final currentAmp =
-        ((recentDb - _kDbMin) / (_kDbMax - _kDbMin)).clamp(0.0, 1.0);
-    final barColor = _barColor(recentDb);
-
-    for (int i = 0; i < _kBars; i++) {
-      final barAngle = (i / _kBars) * 2 * math.pi;
-
-      // Animated per-bar ripple — multi-harmonic sine on top of global level
-      final v = 0.50 * math.sin(barAngle * 2  + phase * 1.4) +
-                0.28 * math.sin(barAngle * 5  + phase * 2.1) +
-                0.14 * math.sin(barAngle * 9  + phase * 0.9) +
-                0.08 * math.sin(barAngle * 17 + phase * 3.0);
-      // v ≈ −1..+1 → factor 0.15..1.0
-      final factor = ((v + 1.0) * 0.425 + 0.15).clamp(0.15, 1.0);
-
-      final numDots = (currentAmp * maxDots * factor).round();
-      if (numDots == 0) continue;
-
-      final drawAngle = barAngle - math.pi / 2;
-      final cosA = math.cos(drawAngle);
-      final sinA = math.sin(drawAngle);
-
-      for (int d = 0; d < numDots; d++) {
-        final r = baseR + (d + 0.5) * dotStep;
-        canvas.drawCircle(
-          Offset(center.dx + r * cosA, center.dy + r * sinA),
-          dotR,
-          Paint()..color = barColor,
-        );
-      }
-    }
-
-    // ── Threshold ring ───────────────────────────────────────
-    // Soft glow stroke
-    canvas.drawCircle(center, threshR,
-        Paint()
-          ..color = const Color(0x22E87722)
-          ..strokeWidth = 20
-          ..style = PaintingStyle.stroke);
-
-    // Dashed amber ring
-    canvas.drawPath(
-      _dashedCircle(center, threshR),
-      Paint()
-        ..color = const Color(0xE6E87722)
-        ..strokeWidth = 1.5
-        ..style = PaintingStyle.stroke,
-    );
-
-    // ── Drag pill at 12 o'clock on threshold ring ────────────
-    final gripCenter = Offset(center.dx, center.dy - threshR);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: gripCenter, width: 40, height: 20),
-        const Radius.circular(10),
+    // ── Threshold value in center ─────────────────────────────
+    final tpNum = TextPainter(
+      text: TextSpan(
+        text: threshDb.abs().toStringAsFixed(0),
+        style: TextStyle(
+          fontSize: 38,
+          fontWeight: FontWeight.w700,
+          color: waveColor.withValues(alpha: 0.9),
+          letterSpacing: -1,
+        ),
       ),
-      Paint()..color = const Color(0xFFE87722),
-    );
-    for (int ri = 0; ri < 3; ri++) {
-      final rx = gripCenter.dx - 4 + ri * 4.0;
-      canvas.drawRect(
-        Rect.fromLTWH(rx - 0.5, gripCenter.dy - 4, 1, 8),
-        Paint()..color = const Color(0x8CFFFFFF),
-      );
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final tpUnit = TextPainter(
+      text: TextSpan(
+        text: 'dB',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: waveColor.withValues(alpha: 0.5),
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    const gap = 2.0;
+    final totalH = tpNum.height + gap + tpUnit.height;
+    tpNum.paint(canvas,
+        Offset(center.dx - tpNum.width / 2, center.dy - totalH / 2));
+    tpUnit.paint(canvas,
+        Offset(center.dx - tpUnit.width / 2,
+            center.dy - totalH / 2 + tpNum.height + gap));
+
+    // ── Wave layers ───────────────────────────────────────────
+    for (int li = 0; li < _kLayers; li++) {
+      final t    = li / (_kLayers - 1); // 0..1
+      final path = _buildPath(center, baseR, maxDisp, amp, li);
+
+      final color = waveColor;
+
+      final envelope = (0.25 + amp * 0.75).clamp(0.0, 1.0);
+      // Pass 1 — outer halo (wide, very transparent)
+      canvas.drawPath(path,
+          Paint()
+            ..color = color.withValues(alpha: ((0.04 + t * 0.04) * envelope).clamp(0.0, 1.0))
+            ..strokeWidth = 28.0 + t * 16.0
+            ..style = PaintingStyle.stroke);
+      // Pass 2 — mid glow
+      canvas.drawPath(path,
+          Paint()
+            ..color = color.withValues(alpha: ((0.10 + t * 0.10) * envelope).clamp(0.0, 1.0))
+            ..strokeWidth = 10.0 + t * 6.0
+            ..style = PaintingStyle.stroke);
+      // Pass 3 — inner glow
+      canvas.drawPath(path,
+          Paint()
+            ..color = color.withValues(alpha: ((0.20 + t * 0.16) * envelope).clamp(0.0, 1.0))
+            ..strokeWidth = 3.5 + t * 2.0
+            ..style = PaintingStyle.stroke);
+      // Pass 4 — sharp core
+      canvas.drawPath(path,
+          Paint()
+            ..color = color.withValues(alpha: ((0.50 + t * 0.40) * (0.2 + amp * 0.8)).clamp(0.0, 1.0))
+            ..strokeWidth = 0.8 + t * 0.5
+            ..style = PaintingStyle.stroke);
     }
+
+    // ── Threshold ring — blur glow (single circle, acceptable cost) ─
+    canvas.drawCircle(center, threshR,
+        Paint()
+          ..color = waveColor.withValues(alpha: 0.35)
+          ..strokeWidth = 12
+          ..style = PaintingStyle.stroke
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
+    canvas.drawCircle(center, threshR,
+        Paint()
+          ..color = waveColor.withValues(alpha: 0.85)
+          ..strokeWidth = 0.8
+          ..style = PaintingStyle.stroke);
   }
 
   @override

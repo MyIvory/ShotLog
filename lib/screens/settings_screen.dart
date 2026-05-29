@@ -143,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         _GlassRow(
                           icon: const _IconBadge(
-                              Icons.graphic_eq, _kBgAmber),
+                              Icons.graphic_eq, _kBgBlue),
                           label: 'Поріг гучності',
                           hint: 'Натисніть для налаштування',
                           value: '${_s.detectionDbfs.toStringAsFixed(0)} dBFS',
