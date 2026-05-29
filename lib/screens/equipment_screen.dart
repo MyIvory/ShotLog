@@ -11,7 +11,7 @@ const _kAccent   = Color(0xFFE87722);
 const _kText     = Color(0xFFF0EAE5);
 const _kHint     = Color(0x73F0EAE5);
 const _kBgRifle  = Color(0x80B05010);
-const _kBgBullet = Color(0x803C7850);
+const _kBgBullet = Color(0x80B05010);
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -513,17 +513,6 @@ Widget _handle() => Container(
   ),
 );
 
-Widget _sheetHeader(String title, String subtitle) => Padding(
-  padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(title,
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
-            color: _kText, letterSpacing: -0.2)),
-    const SizedBox(height: 3),
-    Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0x61F0EAE5))),
-  ]),
-);
-
 // ── Rifle sheet ───────────────────────────────────────────────────────────────
 
 Future<void> _showRifleSheet(BuildContext context, [Rifle? existing]) async {
@@ -556,54 +545,83 @@ class _RifleSheetState extends State<_RifleSheet> {
     super.dispose();
   }
 
+  Future<void> _save() async {
+    if (_name.text.trim().isEmpty) return;
+    final r = Rifle(
+      id:      widget.existing?.id,
+      name:    _name.text.trim(),
+      caliber: _cal.text.trim().isEmpty   ? null : _cal.text.trim(),
+      notes:   _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+    );
+    if (widget.existing == null) {
+      await widget.ep.addRifle(r);
+    } else {
+      await widget.ep.updateRifle(r);
+    }
+    if (mounted) Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: _sheetDecoration(),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _handle(),
-          _sheetHeader(
-            widget.existing == null ? 'Нова гвинтівка' : 'Редагувати гвинтівку',
-            'Заповніть дані спорядження',
+    final bot = MediaQuery.paddingOf(context).bottom
+        + MediaQuery.viewInsetsOf(context).bottom;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: const BoxDecoration(
+            color:  Color(0x2AFFFFFF),
+            border: Border(top: BorderSide(color: Color(0x28FFFFFF), width: 0.5)),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: Column(children: [
-              _GlassField(label: 'Назва', isRequired: true,
-                  controller: _name, hint: 'напр. CZ Shadow 2'),
-              const SizedBox(height: 9),
-              _GlassField(label: 'Калібр',
-                  controller: _cal, hint: 'напр. 9×19 мм'),
-              const SizedBox(height: 9),
-              _GlassField(label: 'Нотатки',
-                  controller: _notes, hint: 'опціонально'),
-            ]),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 14, 16,
-                MediaQuery.of(context).padding.bottom + 16),
-            child: _Footer(
-              onCancel: () => Navigator.pop(context),
-              onSave: () async {
-                if (_name.text.trim().isEmpty) return;
-                final r = Rifle(
-                  id: widget.existing?.id,
-                  name: _name.text.trim(),
-                  caliber: _cal.text.trim().isEmpty ? null : _cal.text.trim(),
-                  notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-                );
-                if (widget.existing == null) {
-                  await widget.ep.addRifle(r);
-                } else {
-                  await widget.ep.updateRifle(r);
-                }
-                if (context.mounted) Navigator.pop(context);
-              },
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const SizedBox(height: 12),
+            Center(child: Container(
+              width: 32, height: 3,
+              decoration: BoxDecoration(
+                color: const Color(0x40FFFFFF),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            )),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: Text(
+                    widget.existing == null ? 'Нова гвинтівка' : 'Редагувати гвинтівку',
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
+                        color: _kText),
+                  )),
+                  _EqBtn(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.west, color: _kText, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  _EqBtn(
+                    onTap: _save,
+                    child: const Icon(Icons.check, color: _kText, size: 18),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ]),
+            const Divider(height: 1, thickness: 0.5, color: Color(0x20FFFFFF)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(children: [
+                _GlassField(label: 'Назва', isRequired: true,
+                    controller: _name, hint: 'напр. CZ Shadow 2'),
+                const SizedBox(height: 9),
+                _GlassField(label: 'Калібр',
+                    controller: _cal, hint: 'напр. 9×19 мм'),
+                const SizedBox(height: 9),
+                _GlassField(label: 'Нотатки',
+                    controller: _notes, hint: 'опціонально'),
+              ]),
+            ),
+            SizedBox(height: 16 + bot),
+          ]),
+        ),
       ),
     );
   }
@@ -646,66 +664,95 @@ class _BulletSheetState extends State<_BulletSheet> {
     super.dispose();
   }
 
+  Future<void> _save() async {
+    if (_name.text.trim().isEmpty) return;
+    final b = Bullet(
+      id:         widget.existing?.id,
+      name:       _name.text.trim(),
+      caliber:    _cal.text.trim().isEmpty   ? null : _cal.text.trim(),
+      weightGr:   double.tryParse(_weight.text.trim()),
+      velocityMs: double.tryParse(_vel.text.trim()),
+      notes:      _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+    );
+    if (widget.existing == null) {
+      await widget.ep.addBullet(b);
+    } else {
+      await widget.ep.updateBullet(b);
+    }
+    if (mounted) Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: _sheetDecoration(),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _handle(),
-          _sheetHeader(
-            widget.existing == null ? 'Новий набій' : 'Редагувати набій',
-            'Балістичні характеристики',
+    final bot = MediaQuery.paddingOf(context).bottom
+        + MediaQuery.viewInsetsOf(context).bottom;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: const BoxDecoration(
+            color:  Color(0x2AFFFFFF),
+            border: Border(top: BorderSide(color: Color(0x28FFFFFF), width: 0.5)),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: Column(children: [
-              _GlassField(label: 'Назва', isRequired: true,
-                  controller: _name, hint: 'напр. Hornady ELD-M 208gr'),
-              const SizedBox(height: 9),
-              _GlassField(label: 'Калібр',
-                  controller: _cal, hint: 'напр. .300 Win Mag'),
-              const SizedBox(height: 9),
-              Row(children: [
-                Expanded(child: _GlassField(
-                    label: 'Вага, gr', controller: _weight, hint: '208',
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true))),
-                const SizedBox(width: 8),
-                Expanded(child: _GlassField(
-                    label: 'Швидкість, м/с', controller: _vel, hint: '820',
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true))),
-              ]),
-              const SizedBox(height: 9),
-              _GlassField(label: 'Нотатки',
-                  controller: _notes, hint: 'опціонально'),
-            ]),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 14, 16,
-                MediaQuery.of(context).padding.bottom + 16),
-            child: _Footer(
-              onCancel: () => Navigator.pop(context),
-              onSave: () async {
-                if (_name.text.trim().isEmpty) return;
-                final b = Bullet(
-                  id: widget.existing?.id,
-                  name: _name.text.trim(),
-                  caliber: _cal.text.trim().isEmpty ? null : _cal.text.trim(),
-                  weightGr: double.tryParse(_weight.text.trim()),
-                  velocityMs: double.tryParse(_vel.text.trim()),
-                  notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-                );
-                if (widget.existing == null) {
-                  await widget.ep.addBullet(b);
-                } else {
-                  await widget.ep.updateBullet(b);
-                }
-                if (context.mounted) Navigator.pop(context);
-              },
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const SizedBox(height: 12),
+            Center(child: Container(
+              width: 32, height: 3,
+              decoration: BoxDecoration(
+                color: const Color(0x40FFFFFF),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            )),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: Text(
+                    widget.existing == null ? 'Новий набій' : 'Редагувати набій',
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
+                        color: _kText),
+                  )),
+                  _EqBtn(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.west, color: _kText, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  _EqBtn(
+                    onTap: _save,
+                    child: const Icon(Icons.check, color: _kText, size: 18),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ]),
+            const Divider(height: 1, thickness: 0.5, color: Color(0x20FFFFFF)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(children: [
+                _GlassField(label: 'Назва', isRequired: true,
+                    controller: _name, hint: 'напр. Hornady ELD-M 208gr'),
+                const SizedBox(height: 9),
+                _GlassField(label: 'Калібр',
+                    controller: _cal, hint: 'напр. .300 Win Mag'),
+                const SizedBox(height: 9),
+                Row(children: [
+                  Expanded(child: _GlassField(
+                      label: 'Вага, gr', controller: _weight, hint: '208',
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true))),
+                  const SizedBox(width: 8),
+                  Expanded(child: _GlassField(
+                      label: 'Швидкість, м/с', controller: _vel, hint: '820',
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true))),
+                ]),
+                const SizedBox(height: 9),
+                _GlassField(label: 'Нотатки',
+                    controller: _notes, hint: 'опціонально'),
+              ]),
+            ),
+            SizedBox(height: 16 + bot),
+          ]),
+        ),
       ),
     );
   }
@@ -840,51 +887,6 @@ class _GlassField extends StatelessWidget {
           ),
         ),
       ),
-    ]);
-  }
-}
-
-// ── Footer ────────────────────────────────────────────────────────────────────
-
-class _Footer extends StatelessWidget {
-  final VoidCallback onCancel;
-  final VoidCallback onSave;
-  const _Footer({required this.onCancel, required this.onSave});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      Expanded(child: GestureDetector(
-        onTap: onCancel,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 13),
-          decoration: BoxDecoration(
-            color: const Color(0x12FFFFFF),
-            border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(child: Text('Скасувати',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
-                  color: Color(0xA6F0EAE5)))),
-        ),
-      )),
-      const SizedBox(width: 8),
-      Expanded(flex: 2, child: GestureDetector(
-        onTap: onSave,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 13),
-          decoration: BoxDecoration(
-            color: _kAccent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [BoxShadow(
-              color: Color(0x4DE87722), blurRadius: 12, offset: Offset(0, 2),
-            )],
-          ),
-          child: const Center(child: Text('Зберегти',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A0A00)))),
-        ),
-      )),
     ]);
   }
 }

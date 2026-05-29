@@ -8,7 +8,7 @@ import '../providers/equipment_provider.dart';
 import '../providers/session_provider.dart';
 import '../services/settings_service.dart';
 import '../widgets/parallax_bg.dart';
-import 'new_session_sheet.dart';
+import 'new_session_sheet.dart' show showNewSessionScreen;
 import 'session_screen.dart';
 import 'session_detail_screen.dart';
 
@@ -185,11 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await context.read<EquipmentProvider>().loadAll();
 
     if (!mounted) return;
-    final session = await showModalBottomSheet<Session>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const NewSessionSheet(),
-    );
+    final session = await showNewSessionScreen(context);
 
     if (session == null || !mounted) return;
 
