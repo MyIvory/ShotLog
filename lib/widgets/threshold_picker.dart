@@ -11,9 +11,6 @@ import '../widgets/parallax_bg.dart';
 const double _kDbMin   = -80.0;
 const double _kDbMax   =   0.0;
 const int    _kHistory = 220;
-const int    _kLines   =  18;
-const double _kPadTop  =  20.0;
-const double _kPadBot  =   8.0;
 
 const _kText = Color(0xFFF0EAE5);
 const _kHint = Color(0x61F0EAE5);
@@ -111,12 +108,19 @@ class _ThresholdScreenState extends State<ThresholdScreen>
     super.dispose();
   }
 
-  void _handleDragAt(double localY, double canvasH) {
-    final effectiveH = canvasH - _kPadTop - _kPadBot;
-    final adjusted = (localY - _kPadTop).clamp(0.0, effectiveH);
-    final db = (_kDbMax - (adjusted / effectiveH) * (_kDbMax - _kDbMin))
-        .clamp(_kDbMin, _kDbMax);
-    setState(() => _threshDb = db.roundToDouble());
+  void _handleRadialDrag(DragUpdateDetails d, double canvasW, double canvasH) {
+    final center = Offset(canvasW / 2, canvasH / 2);
+    final fromCenter = d.localPosition - center;
+    final dist = fromCenter.distance;
+    if (dist < 1) return;
+    // Radial component of delta (positive = outward, negative = inward)
+    final radialDelta =
+        (d.delta.dx * fromCenter.dx + d.delta.dy * fromCenter.dy) / dist;
+    final maxR = canvasW * 0.47;
+    final dbDelta = (radialDelta / maxR) * (_kDbMax - _kDbMin) ;
+    setState(() {
+      _threshDb = (_threshDb + dbDelta).clamp(_kDbMin, _kDbMax);
+    });
   }
 
   @override
@@ -155,35 +159,30 @@ class _ThresholdScreenState extends State<ThresholdScreen>
           Column(
             children: [
               SizedBox(height: top + 76 + 8),
-              // Waveform — fills all available height
+              // Radial visualizer — fills all available height
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: LayoutBuilder(
-                      builder: (_, constraints) {
-                        final canvasH = constraints.maxHeight;
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onVerticalDragUpdate: (d) =>
-                              _handleDragAt(d.localPosition.dy, canvasH),
-                          onTapDown: (d) =>
-                              _handleDragAt(d.localPosition.dy, canvasH),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: canvasH,
-                            child: CustomPaint(
-                              painter: _WaveformPainter(
-                                history:  List.unmodifiable(_history),
-                                threshDb: _threshDb,
-                                phase:    _phase,
-                              ),
+                  child: LayoutBuilder(
+                    builder: (_, constraints) {
+                      final canvasH = constraints.maxHeight;
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanUpdate: (d) => _handleRadialDrag(
+                            d, constraints.maxWidth, canvasH),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: canvasH,
+                          child: CustomPaint(
+                            painter: _RadialPainter(
+                              history:  List.unmodifiable(_history),
+                              threshDb: _threshDb,
+                              phase:    _phase,
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -249,7 +248,7 @@ class _ThresholdScreenState extends State<ThresholdScreen>
                                           letterSpacing: -0.5)),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${_threshDb.toStringAsFixed(0)} dBFS · тягніть лінію',
+                                    '${_threshDb.toStringAsFixed(0)} dBFS · тягніть вгору/вниз',
                                     style: const TextStyle(
                                         fontSize: 12, color: _kHint),
                                   ),
@@ -339,169 +338,157 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-// ── Waveform painter ──────────────────────────────────────────────────────────
+// ── Radial dot painter ────────────────────────────────────────────────────────
 
-class _WaveformPainter extends CustomPainter {
+class _RadialPainter extends CustomPainter {
   final List<double> history;
   final double threshDb;
   final double phase;
 
-  const _WaveformPainter({
+  static const _kBars = 72;
+
+  const _RadialPainter({
     required this.history,
     required this.threshDb,
     required this.phase,
   });
 
-  double _dbToY(double db, double h) {
-    final f = (db - _kDbMin) / (_kDbMax - _kDbMin);
-    final effectiveH = h - _kPadTop - _kPadBot;
-    return _kPadTop + effectiveH - f * effectiveH;
+  Color _barColor(double db) {
+    final margin = threshDb - db;
+    if (margin > 15) return const Color(0xFF6EE0A0);
+    if (margin > 5) {
+      final t = (15 - margin) / 10;
+      return Color.fromRGBO(
+        (110 + t * (232 - 110)).round(),
+        (224 + t * (119 - 224)).round(),
+        (160 + t * (34  - 160)).round(),
+        1.0,
+      );
+    }
+    if (margin > 0) return const Color(0xFFE87722);
+    return const Color(0xFFFF6050);
   }
 
-  Color _levelColor(double db, double alpha) {
-    final margin = threshDb - db;
-    int r, g, b;
-    if (margin > 15) {
-      r = 110; g = 224; b = 160;
-    } else if (margin > 5) {
-      final t = (15 - margin) / 10;
-      r = (110 + t * (232 - 110)).round();
-      g = (224 + t * (119 - 224)).round();
-      b = (160 + t * (34  - 160)).round();
-    } else if (margin > 0) {
-      r = 232; g = 119; b = 34;
-    } else {
-      r = 255; g = 80; b = 60;
+  Path _dashedCircle(Offset center, double r) {
+    final path         = Path();
+    final circumference = 2 * math.pi * r;
+    final totalDashes  = (circumference / 14.0).floor().clamp(1, 999);
+    final stepAngle    = 2 * math.pi / totalDashes;
+    final dashAngle    = (8.0 / circumference) * 2 * math.pi;
+    final rect         = Rect.fromCircle(center: center, radius: r);
+    for (int i = 0; i < totalDashes; i++) {
+      path.addArc(rect, -math.pi / 2 + i * stepAngle, dashAngle);
     }
-    return Color.fromRGBO(r, g, b, alpha);
+    return path;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
+    final w      = size.width;
+    final h      = size.height;
+    final center = Offset(w / 2, h / 2);
 
-    // dB grid lines + labels
-    for (int db = -80; db <= 0; db += 10) {
-      final y = _dbToY(db.toDouble(), h);
-      canvas.drawLine(
-        Offset(0, y), Offset(w, y),
-        Paint()..color = const Color(0x0AFFFFFF)..strokeWidth = 0.5,
-      );
-      final tp = TextPainter(
-        text: TextSpan(
-          text: db == 0 ? '0' : db.toString(),
-          style: const TextStyle(fontSize: 11, color: Color(0x59F0EAE5)),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(4, y - 13));
-    }
+    final baseR   = w * 0.19;
+    final maxDisp = w * 0.28;
+    final dotR    = w * 0.0085;
+    final dotStep = dotR * 2 + w * 0.005;
+    final maxDots = (maxDisp / dotStep).floor();
 
-    // Waveform — 18 layered lines
-    final lastDb = history.last;
-    for (int li = 0; li < _kLines; li++) {
-      final t        = li / (_kLines - 1);
-      final spread   = 0.6 + t * 0.4;
-      final lineAlpha = 0.05 + t * 0.55;
-      final phaseOff = (li - _kLines / 2) * 0.18;
+    final threshNorm = ((threshDb - _kDbMin) / (_kDbMax - _kDbMin)).clamp(0.0, 1.0);
+    final threshR    = baseR + threshNorm * maxDisp;
 
-      final path = Path();
-      bool started = false;
-
-      for (int i = 0; i < history.length; i++) {
-        final x       = (i / (history.length - 1)) * w;
-        final histDb  = history[i];
-        final histAmp = ((histDb - _kDbMin) / (_kDbMax - _kDbMin)).clamp(0.0, 1.0);
-        final centerY = _dbToY(histDb, h);
-        final waveAmp = histAmp * h * 0.18 * spread;
-
-        final wave =
-            math.sin(i * 0.045 * 2.5 + phase + phaseOff)               * waveAmp * 0.60 +
-            math.sin(i * 0.045 * 5.1 + phase * 1.3 + phaseOff * 0.7)   * waveAmp * 0.25 +
-            math.sin(i * 0.045 * 8.3 + phase * 0.7 + phaseOff * 1.3)   * waveAmp * 0.15;
-
-        final y = centerY + wave;
-        if (!started) { path.moveTo(x, y); started = true; }
-        else          { path.lineTo(x, y); }
-      }
-
-      canvas.drawPath(
-        path,
+    // ── Inner ring pulse ─────────────────────────────────────
+    final pulseA = 0.07 + 0.04 * math.sin(phase * 1.5);
+    canvas.drawCircle(center, baseR,
+        Paint()..color = Color.fromRGBO(110, 224, 160, pulseA));
+    canvas.drawCircle(center, baseR,
         Paint()
-          ..color      = _levelColor(lastDb, lineAlpha)
-          ..strokeWidth = t < 0.3 ? 0.4 : t < 0.7 ? 0.7 : 1.0
-          ..style      = PaintingStyle.stroke,
-      );
+          ..color = const Color(0x33FFFFFF)
+          ..strokeWidth = 0.5
+          ..style = PaintingStyle.stroke);
+
+    // ── Danger zone fill ─────────────────────────────────────
+    canvas.drawCircle(center, threshR,
+        Paint()..color = const Color(0x08FF503C));
+
+    // ── Dot bars — all react to current level simultaneously ──
+    // Smooth current level over last 3 samples
+    final recentDb = history.length >= 3
+        ? (history[history.length - 1] +
+               history[history.length - 2] +
+               history[history.length - 3]) /
+              3
+        : history.last;
+    final currentAmp =
+        ((recentDb - _kDbMin) / (_kDbMax - _kDbMin)).clamp(0.0, 1.0);
+    final barColor = _barColor(recentDb);
+
+    for (int i = 0; i < _kBars; i++) {
+      final barAngle = (i / _kBars) * 2 * math.pi;
+
+      // Animated per-bar ripple — multi-harmonic sine on top of global level
+      final v = 0.50 * math.sin(barAngle * 2  + phase * 1.4) +
+                0.28 * math.sin(barAngle * 5  + phase * 2.1) +
+                0.14 * math.sin(barAngle * 9  + phase * 0.9) +
+                0.08 * math.sin(barAngle * 17 + phase * 3.0);
+      // v ≈ −1..+1 → factor 0.15..1.0
+      final factor = ((v + 1.0) * 0.425 + 0.15).clamp(0.15, 1.0);
+
+      final numDots = (currentAmp * maxDots * factor).round();
+      if (numDots == 0) continue;
+
+      final drawAngle = barAngle - math.pi / 2;
+      final cosA = math.cos(drawAngle);
+      final sinA = math.sin(drawAngle);
+
+      for (int d = 0; d < numDots; d++) {
+        final r = baseR + (d + 0.5) * dotStep;
+        canvas.drawCircle(
+          Offset(center.dx + r * cosA, center.dy + r * sinA),
+          dotR,
+          Paint()..color = barColor,
+        );
+      }
     }
 
-    // Glow at right edge (current level)
-    final glowY = _dbToY(lastDb, h);
-    final glowColor = _levelColor(lastDb, 1.0);
-    canvas.drawCircle(
-      Offset(w - 4, glowY),
-      28,
+    // ── Threshold ring ───────────────────────────────────────
+    // Soft glow stroke
+    canvas.drawCircle(center, threshR,
+        Paint()
+          ..color = const Color(0x22E87722)
+          ..strokeWidth = 20
+          ..style = PaintingStyle.stroke);
+
+    // Dashed amber ring
+    canvas.drawPath(
+      _dashedCircle(center, threshR),
       Paint()
-        ..shader = RadialGradient(
-          colors: [glowColor.withValues(alpha: 0.7), glowColor.withValues(alpha: 0.0)],
-        ).createShader(Rect.fromCircle(center: Offset(w - 4, glowY), radius: 28)),
+        ..color = const Color(0xE6E87722)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
     );
 
-    // Threshold line
-    final threshY = _dbToY(threshDb, h);
-
-    // Danger zone above threshold
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, w, threshY),
-      Paint()..color = const Color(0x0AFF503C),
-    );
-
-    // Dashed line
-    const dash = 8.0, gap = 5.0;
-    double x = 0;
-    final dashPaint = Paint()
-      ..color = const Color(0xE6E87722)
-      ..strokeWidth = 1.5;
-    while (x < w) {
-      canvas.drawLine(
-          Offset(x, threshY), Offset(math.min(x + dash, w), threshY), dashPaint);
-      x += dash + gap;
-    }
-
-    // Threshold glow band
-    canvas.drawRect(
-      Rect.fromLTWH(0, threshY - 12, w, 24),
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0x00E87722),
-            const Color(0x1FE87722),
-            const Color(0x00E87722),
-          ],
-        ).createShader(Rect.fromLTWH(0, threshY - 12, w, 24)),
-    );
-
-    // Drag pill on right side of threshold line
-    const pillW = 48.0, pillH = 22.0;
-    final pillX = w - pillW - 8;
-    final pillY = threshY - pillH / 2;
+    // ── Drag pill at 12 o'clock on threshold ring ────────────
+    final gripCenter = Offset(center.dx, center.dy - threshR);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-          Rect.fromLTWH(pillX, pillY, pillW, pillH), const Radius.circular(11)),
+        Rect.fromCenter(center: gripCenter, width: 40, height: 20),
+        const Radius.circular(10),
+      ),
       Paint()..color = const Color(0xFFE87722),
     );
     for (int ri = 0; ri < 3; ri++) {
-      final rx = pillX + pillW / 2 - 5 + ri * 5.0;
+      final rx = gripCenter.dx - 4 + ri * 4.0;
       canvas.drawRect(
-        Rect.fromLTWH(rx - 0.5, pillY + 5, 1, pillH - 10),
+        Rect.fromLTWH(rx - 0.5, gripCenter.dy - 4, 1, 8),
         Paint()..color = const Color(0x8CFFFFFF),
       );
     }
   }
 
   @override
-  bool shouldRepaint(covariant _WaveformPainter old) =>
-      old.phase != phase || old.threshDb != threshDb;
+  bool shouldRepaint(covariant _RadialPainter old) =>
+      old.phase != phase ||
+      old.threshDb != threshDb ||
+      old.history.last != history.last;
 }
