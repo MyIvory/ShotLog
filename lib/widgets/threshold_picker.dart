@@ -1,52 +1,56 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import '../widgets/parallax_bg.dart';
 
-const double _kDbMin    = -80.0;
-const double _kDbMax    =   0.0;
-const int    _kHistory  = 220;
-const int    _kLines    =  18;
-const double _kCanvasH  = 280.0;
-const double _kPadTop   =  20.0;
-const double _kPadBot   =   8.0;
+const double _kDbMin   = -80.0;
+const double _kDbMax   =   0.0;
+const int    _kHistory = 220;
+const int    _kLines   =  18;
+const double _kPadTop  =  20.0;
+const double _kPadBot  =   8.0;
 
-/// Opens the waveform threshold picker as a modal bottom sheet.
+const _kText = Color(0xFFF0EAE5);
+const _kHint = Color(0x61F0EAE5);
+
+/// Opens the threshold screen as a full-screen push.
 /// Returns the selected dBFS value, or null if cancelled.
 Future<double?> showThresholdPicker(BuildContext context, double currentThreshold) {
-  return showModalBottomSheet<double>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => _ThresholdPickerSheet(initialThreshold: currentThreshold),
+  return Navigator.push<double>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ThresholdScreen(initialThreshold: currentThreshold),
+    ),
   );
 }
 
-// ── Sheet ─────────────────────────────────────────────────────────────────────
+// ── Screen ────────────────────────────────────────────────────────────────────
 
-class _ThresholdPickerSheet extends StatefulWidget {
+class ThresholdScreen extends StatefulWidget {
   final double initialThreshold;
-  const _ThresholdPickerSheet({required this.initialThreshold});
+  const ThresholdScreen({super.key, required this.initialThreshold});
 
   @override
-  State<_ThresholdPickerSheet> createState() => _ThresholdPickerSheetState();
+  State<ThresholdScreen> createState() => _ThresholdScreenState();
 }
 
-class _ThresholdPickerSheetState extends State<_ThresholdPickerSheet>
+class _ThresholdScreenState extends State<ThresholdScreen>
     with SingleTickerProviderStateMixin {
 
-  final _recorder  = AudioRecorder();
+  final _recorder = AudioRecorder();
   StreamSubscription<Amplitude>? _sub;
   String? _tempPath;
   late final Ticker _ticker;
 
   double _currentDbfs = -60.0;
   late double _threshDb;
-  double _phase    = 0.0;
-  int    _lastMs   = 0;
+  double _phase = 0.0;
+  int    _lastMs = 0;
 
   final List<double> _history = List.filled(_kHistory, -70.0, growable: true);
 
@@ -107,8 +111,8 @@ class _ThresholdPickerSheetState extends State<_ThresholdPickerSheet>
     super.dispose();
   }
 
-  void _handleDrag(double localY) {
-    const effectiveH = _kCanvasH - _kPadTop - _kPadBot;
+  void _handleDragAt(double localY, double canvasH) {
+    final effectiveH = canvasH - _kPadTop - _kPadBot;
     final adjusted = (localY - _kPadTop).clamp(0.0, effectiveH);
     final db = (_kDbMax - (adjusted / effectiveH) * (_kDbMax - _kDbMin))
         .clamp(_kDbMin, _kDbMax);
@@ -117,171 +121,184 @@ class _ThresholdPickerSheetState extends State<_ThresholdPickerSheet>
 
   @override
   Widget build(BuildContext context) {
+    final mq     = MediaQuery.of(context);
+    final top    = mq.padding.top;
+    final bot    = mq.padding.bottom;
     final margin = _threshDb - _currentDbfs;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF100C0A),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          top:   BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-          left:  BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-          right: BorderSide(color: Color(0x1AFFFFFF), width: 0.5),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
         children: [
-          // ── Handle ───────────────────────────────────────────────
-          Container(
-            width: 36, height: 4,
-            margin: const EdgeInsets.only(top: 12),
-            decoration: BoxDecoration(
-              color: const Color(0x2EFFFFFF),
-              borderRadius: BorderRadius.circular(2),
+          // ── Background ────────────────────────────────────────────
+          const Positioned.fill(
+            child: ParallaxBg(
+              asset: 'assets/images/bg_rifle.webp',
+              baseAlignment: Alignment(0.2, -1.0),
             ),
           ),
-
-          // ── Header ───────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Поріг детекції',
-                          style: TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.w600,
-                              color: Color(0xFFF0EAE5), letterSpacing: -0.2)),
-                      SizedBox(height: 3),
-                      Text('Тягніть горизонтальну лінію',
-                          style: TextStyle(fontSize: 12, color: Color(0x66F0EAE5))),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0x26E87722),
-                    border: Border.all(color: const Color(0x66E87722), width: 0.5),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${_threshDb.toStringAsFixed(0)} dBFS',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700,
-                        color: Color(0xFFE87722)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Waveform canvas ───────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragUpdate: (d) => _handleDrag(d.localPosition.dy),
-                onTapDown:            (d) => _handleDrag(d.localPosition.dy),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: _kCanvasH,
-                  child: CustomPaint(
-                    painter: _WaveformPainter(
-                      history:  List.unmodifiable(_history),
-                      threshDb: _threshDb,
-                      phase:    _phase,
-                    ),
-                  ),
+          Positioned.fill(child: Container(color: const Color(0xB8120E0C))),
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xE60C0A08)],
+                  stops: [0.25, 1.0],
                 ),
               ),
             ),
           ),
 
-          // ── Stats chips ───────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              children: [
-                _StatChip(
-                  label: 'Зараз',
-                  value: '${_currentDbfs.toStringAsFixed(0)} dBFS',
-                  valueColor: const Color(0xFF6EE0A0),
+          // ── Content ───────────────────────────────────────────────
+          Column(
+            children: [
+              SizedBox(height: top + 76 + 8),
+              // Waveform — fills all available height
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: LayoutBuilder(
+                      builder: (_, constraints) {
+                        final canvasH = constraints.maxHeight;
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onVerticalDragUpdate: (d) =>
+                              _handleDragAt(d.localPosition.dy, canvasH),
+                          onTapDown: (d) =>
+                              _handleDragAt(d.localPosition.dy, canvasH),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: canvasH,
+                            child: CustomPaint(
+                              painter: _WaveformPainter(
+                                history:  List.unmodifiable(_history),
+                                threshDb: _threshDb,
+                                phase:    _phase,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  label: 'Поріг',
-                  value: '${_threshDb.toStringAsFixed(0)} dBFS',
-                  valueColor: const Color(0xFFE87722),
+              ),
+              // Stats chips
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Row(
+                  children: [
+                    _StatChip(
+                      label: 'Зараз',
+                      value: '${_currentDbfs.toStringAsFixed(0)} dBFS',
+                      valueColor: const Color(0xFF6EE0A0),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatChip(
+                      label: 'Поріг',
+                      value: '${_threshDb.toStringAsFixed(0)} dBFS',
+                      valueColor: const Color(0xFFE87722),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatChip(
+                      label: 'Запас',
+                      value: '${margin >= 0 ? '+' : ''}${margin.toStringAsFixed(0)} dB',
+                      valueColor: margin >= 10
+                          ? const Color(0xFF6EE0A0)
+                          : margin >= 3
+                              ? const Color(0xFFE87722)
+                              : const Color(0xFFFF6050),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  label: 'Запас',
-                  value: '${margin >= 0 ? '+' : ''}${margin.toStringAsFixed(0)} dB',
-                  valueColor: margin >= 10
-                      ? const Color(0xFF6EE0A0)
-                      : margin >= 3
-                          ? const Color(0xFFE87722)
-                          : const Color(0xFFFF6050),
-                ),
-              ],
-            ),
+              ),
+              SizedBox(height: bot),
+            ],
           ),
 
-          // ── Buttons ───────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0x12FFFFFF),
-                        border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
-                        borderRadius: BorderRadius.circular(12),
+          // ── Glass header ──────────────────────────────────────────
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: top),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Поріг детекції',
+                                      style: TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w700,
+                                          color: _kText,
+                                          letterSpacing: -0.5)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${_threshDb.toStringAsFixed(0)} dBFS · тягніть лінію',
+                                    style: const TextStyle(
+                                        fontSize: 12, color: _kHint),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _HdrBtn(
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(Icons.west, color: _kText, size: 18),
+                            ),
+                            const SizedBox(width: 8),
+                            _HdrBtn(
+                              onTap: () => Navigator.pop(context, _threshDb),
+                              child: const Icon(Icons.check, color: _kText, size: 18),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: const Center(
-                        child: Text('Скасувати',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w500,
-                                color: Color(0xA6F0EAE5))),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(_threshDb),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE87722),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Text('Зберегти',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600,
-                                color: Color(0xFF1A0A00))),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Header button ─────────────────────────────────────────────────────────────
+
+class _HdrBtn extends StatelessWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  const _HdrBtn({required this.onTap, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0x1AFFFFFF),
+          border: Border.all(color: const Color(0x1EFFFFFF), width: 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(child: child),
       ),
     );
   }
@@ -364,17 +381,6 @@ class _WaveformPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Background
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, w, h),
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF0A0806), Color(0xFF0F0C09)],
-        ).createShader(Rect.fromLTWH(0, 0, w, h)),
-    );
-
     // dB grid lines + labels
     for (int db = -80; db <= 0; db += 10) {
       final y = _dbToY(db.toDouble(), h);
@@ -411,9 +417,9 @@ class _WaveformPainter extends CustomPainter {
         final waveAmp = histAmp * h * 0.18 * spread;
 
         final wave =
-            math.sin(i * 0.045 * 2.5 + phase + phaseOff)          * waveAmp * 0.60 +
-            math.sin(i * 0.045 * 5.1 + phase * 1.3 + phaseOff * 0.7) * waveAmp * 0.25 +
-            math.sin(i * 0.045 * 8.3 + phase * 0.7 + phaseOff * 1.3) * waveAmp * 0.15;
+            math.sin(i * 0.045 * 2.5 + phase + phaseOff)               * waveAmp * 0.60 +
+            math.sin(i * 0.045 * 5.1 + phase * 1.3 + phaseOff * 0.7)   * waveAmp * 0.25 +
+            math.sin(i * 0.045 * 8.3 + phase * 0.7 + phaseOff * 1.3)   * waveAmp * 0.15;
 
         final y = centerY + wave;
         if (!started) { path.moveTo(x, y); started = true; }
